@@ -217,12 +217,15 @@ def execute_all_tests(config, excluded_modes=[]):
             setattr(StatsObject, "name", name)
             mode_stats.append(StatsObject)
 
-    fname = f"games/{config.game_id}/library/stats_summary.json"
+    fname = os.path.join(config.game_id, "library", "stats_summary.json")
     write_all_stats(mode_stats, fname)
 
 
 def write_all_stats(StatsList: object, filename: str) -> None:
     """Write all stats to JSON file."""
+    # Ensure directory exists
+    os.makedirs(os.path.dirname(os.path.abspath(filename)), exist_ok=True)
+    
     all_stats = {}
     for Stats in StatsList:
         all_stats[Stats.name] = Stats.to_dict()

@@ -38,6 +38,8 @@ def create_books(
     for betmode_name in num_sim_args:
         if num_sim_args[betmode_name] > 0:
             gamestate.betmode = betmode_name
+            # Clear recorded events to prevent cross-contamination between bet modes
+            gamestate.recorded_events = {}
             run_multi_process_sims(
                 threads,
                 batch_size,

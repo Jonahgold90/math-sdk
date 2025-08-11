@@ -343,7 +343,7 @@ fn print_information(
         win_dist_index_map.insert(F64Wrapper(win.clone()), count);
         count += 1;
     }
-    let num_pigs = 10;
+    let num_pigs = show_pigs.len();
 
     (0..num_pigs).into_par_iter().for_each(|pig_index| {
         println!("Printing info for Distribution {}", pig_index + 1);

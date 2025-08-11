@@ -89,6 +89,7 @@ class PrintXLSX:
         hr_dict = self.game_info.mode_hit_rate_info[mode]["all_gameType_hits"]
         rtp_dict = self.game_info.mode_hit_rate_info[mode]["all_gameType_rtp"]
 
+        idy = -1  # Initialize idy in case game_headers_reduced is empty
         for idx, win_range in enumerate(self.global_ranges):
             self.hit_rate_sheet.write(
                 x0 + idx + 1, game_col_start, str(win_range))
@@ -137,6 +138,8 @@ class PrintXLSX:
 
         # Symbol combination hit-rates
         self.hit_rate_sheet.write(symRow - 1, symCol, str("HIT RATES"))
+        idSym = -1  # Initialize in case symbols is empty
+        idKind = -1  # Initialize in case kinds is empty
         for idSym, sym in enumerate(symbols):
             self.hit_rate_sheet.write(symRow + idSym + 1, symCol, str(sym))
         for idKind, kind in enumerate(kinds):

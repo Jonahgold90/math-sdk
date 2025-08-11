@@ -14,12 +14,20 @@ from .get_symbol_hits import construct_symbol_probabilities, construct_custom_ke
 
 def get_config_class(game_id):
     """Load game configuration class."""
-    sys.path.append("././")
+    # Add the project root to Python path
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+    
     module_path = f"games.{game_id}.game_config"
-    module = importlib.import_module(module_path)
-    config_class = getattr(module, "GameConfig")
-
-    return config_class()
+    try:
+        module = importlib.import_module(module_path)
+        config_class = getattr(module, "GameConfig")
+        return config_class()
+    except ModuleNotFoundError as e:
+        print(f"Error importing module: {module_path}")
+        print(f"Python path: {sys.path}")
+        raise e
 
 
 class GameInformation:
@@ -122,20 +130,79 @@ class GameInformation:
                         if fences["name"] not in ["0", "wincap"]:
                             game_type_mapping[mode].append(fences["name"])
                             if fences["hr"] != "x":
-                                mode_fence_info[mode][fences["name"]] = {
-                                    "hr": float(fences["hr"]),
-                                    "rtp": float(fences["rtp"]),
-                                    "av_win": round(
-                                        float(fences["hr"])
-                                        * float(fences["rtp"])
-                                        * self.cost_mapping[fence["bet_mode"]],
-                                        2,
-                                    ),
-                                }
+                                # Calculate actual RTP from force data if available
+                                actual_data = self._get_actual_fence_data(mode, fences["name"])
+                                if actual_data:
+                                    mode_fence_info[mode][fences["name"]] = actual_data
+                                else:
+                                    # Fallback to config values if force data unavailable
+                                    mode_fence_info[mode][fences["name"]] = {
+                                        "hr": float(fences["hr"]),
+                                        "rtp": float(fences["rtp"]),
+                                        "av_win": round(
+                                            float(fences["hr"])
+                                            * float(fences["rtp"])
+                                            * self.cost_mapping[fence["bet_mode"]],
+                                            2,
+                                        ),
+                                    }
                             else:
                                 mode_fence_info[mode][fences["name"]] = {}
         self.game_type_fences = game_type_mapping
         self.mode_fence_info = mode_fence_info
+
+    def _get_actual_fence_data(self, mode, fence_name):
+        """Calculate actual fence data from force records."""
+        import json
+        import os
+        
+        force_path = os.path.join(self.libraryPath, "forces", f"force_record_{mode}.json")
+        if not os.path.exists(force_path):
+            return None
+            
+        try:
+            with open(force_path, 'r') as f:
+                force_data = json.load(f)
+            
+            total_spins = 0
+            total_payout = 0.0
+            fence_spins = 0
+            fence_payout = 0.0
+            
+            for event in force_data:
+                search_criteria_list = event.get("search", [])
+                times_triggered = event.get("timesTriggered", 0)
+                
+                # Convert search criteria from list format to dict
+                search_criteria = {}
+                for item in search_criteria_list:
+                    search_criteria[item["name"]] = item["value"]
+                
+                gametype = search_criteria.get("gametype", "")
+                win_amount = float(search_criteria.get("win_amount", 0.0))
+                
+                total_spins += times_triggered
+                total_payout += (win_amount * times_triggered)
+                
+                if gametype == fence_name:
+                    fence_spins += times_triggered
+                    fence_payout += (win_amount * times_triggered)
+            
+            if total_spins > 0 and fence_spins > 0:
+                mode_cost = self.cost_mapping[mode]
+                hit_rate = fence_spins / total_spins
+                rtp = fence_payout / (total_spins * mode_cost)
+                av_win = fence_payout / fence_spins if fence_spins > 0 else 0.0
+                
+                return {
+                    "hr": round(hit_rate, 4),
+                    "rtp": round(rtp, 4),
+                    "av_win": round(av_win, 2),
+                }
+        except (FileNotFoundError, json.JSONDecodeError, KeyError):
+            pass
+            
+        return None
 
     def get_mode_split_hit_rates(self, modes_to_analyse=None) -> None:
         """Separate win information depending on gametype."""

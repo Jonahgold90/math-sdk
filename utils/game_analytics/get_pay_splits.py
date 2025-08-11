@@ -52,7 +52,17 @@ def make_split_win_distribution(lut_file, split_file, all_modes, base_mode_name=
     lut = open(lut_file, "r", encoding="UTF-8")
 
     all_base, all_free, all_fences = [], [], []
-    for line in split:
+    split_lines = split.readlines()
+    lut_lines = lut.readlines()
+    
+    # Ensure both files have the same number of lines
+    if len(split_lines) != len(lut_lines):
+        raise ValueError(
+            f"Mismatched file lengths: {split_file} has {len(split_lines)} lines but "
+            f"{lut_file} has {len(lut_lines)} lines. Files must have matching line counts."
+        )
+    
+    for line in split_lines:
         idx, idv_fence, base_win, free_win = line.strip().split(",")
         all_base.append(float(base_win))
         all_free.append(float(free_win))
@@ -61,9 +71,11 @@ def make_split_win_distribution(lut_file, split_file, all_modes, base_mode_name=
         all_fences.append(str(idv_fence))
 
     all_weights = []
-    for line in lut:
-        _, weight, _ = line.strip().split(",")
-        all_weights.append(int(weight))
+    for line in lut_lines:
+        parts = line.strip().split(",")
+        if len(parts) < 2:
+            raise ValueError(f"Invalid line in LUT file {lut_file}: {line}")
+        all_weights.append(int(parts[1]))
     total_lut_weight = int(sum(all_weights))
 
     for idx, _ in enumerate(all_weights):
