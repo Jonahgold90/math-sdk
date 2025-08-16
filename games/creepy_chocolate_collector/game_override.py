@@ -10,11 +10,17 @@ class GameStateOverride(GameExecutables):
 
     def reset_book(self):
         super().reset_book()
-        # Initialize collector wild tracking for multiplier ladder
-        if not hasattr(self, 'collectors_collected'):
-            self.collectors_collected = 0
-        if not hasattr(self, 'current_multiplier_index'):
-            self.current_multiplier_index = 0
+        # Initialize collector wild tracking for Big-Bass style multiplier ladder
+        if not hasattr(self, 'cw_progress'):
+            self.cw_progress = 0  # Total CWs collected (all CWs count)
+        if not hasattr(self, 'current_level'):
+            self.current_level = 1  # Current level (1-4)
+        if not hasattr(self, 'segment_level'):
+            self.segment_level = 1  # Locked level for current 10-spin segment
+        if not hasattr(self, 'queued_levelups'):
+            self.queued_levelups = 0  # Number of pending level-ups
+        if not hasattr(self, 'spins_in_segment'):
+            self.spins_in_segment = 0  # Current spin within 10-spin segment
         
         # Initialize custom statistics tracking
         if not hasattr(self, 'total_chocolate_collected'):
@@ -26,8 +32,11 @@ class GameStateOverride(GameExecutables):
         
         # Reset bonus tracking when starting a new game round
         if self.gametype == self.config.basegame_type:
-            self.collectors_collected = 0
-            self.current_multiplier_index = 0
+            self.cw_progress = 0
+            self.current_level = 1
+            self.segment_level = 1
+            self.queued_levelups = 0
+            self.spins_in_segment = 0
             self.total_chocolate_collected = 0
             self.total_extra_spins_granted = 0
             self.max_multiplier_reached = 0
@@ -48,12 +57,14 @@ class GameStateOverride(GameExecutables):
             )
         symbol.assign_attribute({"multiplier": multiplier_value})
 
+
     def assign_collector_properties(self, symbol) -> dict:
         """Assign properties to Collector Wild symbol in bonus."""
         # Always assign collector property to CW symbols (they only appear in bonus)
-        current_multiplier = self.config.collector_multipliers[self.current_multiplier_index]
+        # Use segment-locked level for multiplier
+        segment_multiplier = self.config.collector_multipliers[self.segment_level - 1]
         symbol.assign_attribute({
-            "multiplier": current_multiplier,
+            "multiplier": segment_multiplier,
             "collector": True
         })
         
@@ -66,33 +77,32 @@ class GameStateOverride(GameExecutables):
         symbol.assign_attribute({"cash_value": cash_value})
 
     def process_collector_wilds(self):
-        """Handle Collector Wild collection and multiplier ladder progression."""
+        """Handle Big-Bass style Collector Wild collection and level progression."""
         
         if self.gametype != self.config.freegame_type:
+            print(f"DEBUG: Skipping process_collector_wilds - gametype={self.gametype}, freegame_type={self.config.freegame_type}")
             return
             
-        # Check if already at bonus cap - use win manager's running total
+        # Check if already at bonus cap
         if self.win_manager.running_bet_win >= self.config.wincap:
             return
             
         # Find all Collector Wilds and Chocolate Cash symbols on the board
-        collector_count = 0
+        cw_count_this_spin = 0
         chocolate_cash_total = 0
         cc_count_for_event = 0
+        cc_values = []
         
         for reel_idx, reel in enumerate(self.board):
             for row_idx, symbol in enumerate(reel):
                 if symbol.name == "CW":
-                    # Count all CW symbols, even without collector attribute
-                    if hasattr(symbol, 'collector') and symbol.collector:
-                        collector_count += 1
-                    else:
-                        # Fallback: treat all CW symbols as collectors in freegame
-                        collector_count += 1
+                    # ALL CWs count for progression (Big-Bass style)
+                    cw_count_this_spin += 1
                 elif symbol.name == "CC":
                     if hasattr(symbol, 'cash_value'):
                         chocolate_cash_total += symbol.cash_value
                         cc_count_for_event += 1
+                        cc_values.append(symbol.cash_value)
                     else:
                         # Fallback: assign default cash value if missing
                         default_value = get_random_outcome(
@@ -101,66 +111,97 @@ class GameStateOverride(GameExecutables):
                         symbol.assign_attribute({"cash_value": default_value})
                         chocolate_cash_total += default_value
                         cc_count_for_event += 1
+                        cc_values.append(default_value)
         
-        # Only collect if both collectors and chocolate cash are present
-        if collector_count == 0 or chocolate_cash_total == 0:
-            return
+        # Track ALL CWs for progression (whether they collect or not)
+        if cw_count_this_spin > 0:
+            self.cw_progress += cw_count_this_spin
             
-        # Simplified collection logic: (chocolate_cash_total * bet_amount) * collectors * current_multiplier
-        # Debug: Check bounds
-        max_index = len(self.config.collector_multipliers) - 1
-        if self.current_multiplier_index > max_index:
-            print(f"ERROR: multiplier_index={self.current_multiplier_index} > max={max_index}, multipliers={self.config.collector_multipliers}")
-            self.current_multiplier_index = max_index
-        
-        current_multiplier = self.config.collector_multipliers[self.current_multiplier_index]
-        uncapped_value = chocolate_cash_total * collector_count * current_multiplier
-        collected_value = uncapped_value
-        
-        # Debug logging
-        print(f"DEBUG COLLECTION: CC_total={chocolate_cash_total}, CW_count={collector_count}, multiplier={current_multiplier}")
-        print(f"DEBUG COLLECTION: uncapped={uncapped_value}, running_win={self.win_manager.running_bet_win}, wincap={self.config.wincap}")
-        
-        # Enforce bonus cap using win manager's running total
-        if self.win_manager.running_bet_win + collected_value > self.config.wincap:
-            collected_value = self.config.wincap - self.win_manager.running_bet_win
-            print(f"DEBUG COLLECTION: CAPPED to {collected_value}")
-        else:
-            print(f"DEBUG COLLECTION: NOT CAPPED, final={collected_value}")
-        
-        # Add to current spin wins (only if within cap)  
-        if collected_value > 0:
-            # Use the standard win update method which properly tracks both spin_win and running_bet_win
-            self.win_manager.update_spinwin(collected_value)
-            # Track total chocolate collected for statistics
-            self.total_chocolate_collected += chocolate_cash_total
-            
-            # Emit collection event for proper logging
-            self.book.add_event({
-                'type': 'collection',
-                'cw_count': collector_count,
-                'cc_count': cc_count_for_event,
-                'cc_total_value': chocolate_cash_total,
-                'level': self.current_multiplier_index + 1,  # Level 1-4, not multiplier value
-                'collected_amount': collected_value
-            })
-        
-        # Track collector wilds for multiplier progression
-        self.collectors_collected += collector_count
-        
-        # Check for multiplier ladder progression (every 4 collectors)
-        if self.collectors_collected >= 4:
-            self.collectors_collected -= 4  # Reset counter
-            self.tot_fs += 10  # Add 10 extra spins
-            self.total_extra_spins_granted += 10  # Track extra spins granted
-            
-            # Advance multiplier ladder if not at max
-            if self.current_multiplier_index < len(self.config.collector_multipliers) - 1:
-                self.current_multiplier_index += 1
+            # Check for level-up triggers (every 4 CWs)
+            while self.cw_progress >= 4:
+                self.cw_progress -= 4  # Reset counter
+                self.tot_fs += 10  # Add 10 extra spins (retrigger)
+                self.total_extra_spins_granted += 10
                 
-        # Track the highest multiplier level reached
-        if self.current_multiplier_index > self.max_multiplier_reached:
-            self.max_multiplier_reached = self.current_multiplier_index
+                # Queue level-up only if it won't exceed Level 4
+                if self.current_level + self.queued_levelups < 4:
+                    self.queued_levelups += 1
+                    print(f"DEBUG: Level-up queued! Current level: {self.current_level}, Queued: {self.queued_levelups}")
+        
+        # Collection logic (only if both CW and CC present)
+        collected_value = 0
+        if cw_count_this_spin > 0 and chocolate_cash_total > 0:
+            # Use SEGMENT-LOCKED multiplier
+            segment_multiplier = self.config.collector_multipliers[self.segment_level - 1]
+            uncapped_value = chocolate_cash_total * cw_count_this_spin * segment_multiplier
+            collected_value = uncapped_value
+            
+            # Debug logging
+            #print(f"DEBUG COLLECTION: CC_sum={chocolate_cash_total}, CW_count={cw_count_this_spin}, segment_level={self.segment_level}, multiplier={segment_multiplier}")
+            #print(f"DEBUG COLLECTION: uncapped={uncapped_value}, running_win={self.win_manager.running_bet_win}, wincap={self.config.wincap}")
+            
+            # Enforce bonus cap using win manager's running total
+            if self.win_manager.running_bet_win + collected_value > self.config.wincap:
+                collected_value = self.config.wincap - self.win_manager.running_bet_win
+                print(f"DEBUG COLLECTION: CAPPED to {collected_value}")
+            else:
+                print(f"DEBUG COLLECTION: NOT CAPPED, final={collected_value}")
+            
+            # Add to current spin wins (only if within cap)  
+            if collected_value > 0:
+                # Use the standard win update method which properly tracks both spin_win and running_bet_win
+                self.win_manager.update_spinwin(collected_value)
+                # Track total chocolate collected for statistics
+                self.total_chocolate_collected += chocolate_cash_total
+                
+                # Calculate per-CW payouts with proper remainder handling
+                payout_per_cw_raw = chocolate_cash_total * segment_multiplier
+                base = collected_value // cw_count_this_spin
+                rem = int(collected_value - base * cw_count_this_spin)
+                subcollections = []
+                for i in range(cw_count_this_spin):
+                    amt = base + (1 if i < rem else 0)
+                    subcollections.append({'cw_index': i, 'amount': amt})
+                
+                # Emit collection event for proper logging
+                self.book.add_event({
+                    'type': 'collection',
+                    'spin': self.fs + 1,  # Current spin number
+                    'level': self.segment_level,  # Segment-locked level
+                    'cw_count': cw_count_this_spin,
+                    'cc_count': cc_count_for_event,
+                    'cc_values': cc_values,
+                    'cc_sum': chocolate_cash_total,
+                    'collected_amount': collected_value,
+                    'payout_per_cw_raw': payout_per_cw_raw,
+                    'subcollections': subcollections
+                })
+                
+        # Track the highest level reached
+        max_level_reached = max(self.current_level, self.segment_level)
+        if max_level_reached > self.max_multiplier_reached:
+            self.max_multiplier_reached = max_level_reached
+            
+        # DEBUG PROGRESSION
+        #print(f"DEBUG PROGRESSION: CW_progress={self.cw_progress}, current_level={self.current_level}, queued_levelups={self.queued_levelups}")
+        
+        # End-of-spin segment accounting
+        self.spins_in_segment += 1
+        if self.spins_in_segment >= 10:
+            self.spins_in_segment = 0
+            # Consume at most one queued level-up per segment
+            if self.queued_levelups > 0 and self.current_level < 4:
+                self.current_level += 1
+                self.queued_levelups -= 1
+                self.book.add_event({
+                    'type': 'level_advance', 
+                    'spin': self.fs + 1, 
+                    'new_level': self.current_level
+                })
+                print(f"DEBUG: Level advanced to {self.current_level} at segment boundary")
+            # Lock the new segment's level
+            self.segment_level = self.current_level
+            print(f"DEBUG: New segment started at level {self.segment_level}")
 
 
     def check_repeat(self):

@@ -26,6 +26,14 @@ class GameState(GameStateOverride):
 
     def run_freespin(self):
         self.reset_fs_spin()
+        
+        # Initialize Big-Bass style bonus state at start of free spins
+        self.cw_progress = 0
+        self.current_level = 1
+        self.segment_level = 1
+        self.queued_levelups = 0
+        self.spins_in_segment = 0
+        
         while self.fs < self.tot_fs:
             self.update_freespin()
             self.draw_board()
