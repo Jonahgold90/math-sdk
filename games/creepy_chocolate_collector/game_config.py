@@ -34,6 +34,10 @@ class GameConfig(Config):
             (5, "W"): 50,
             (4, "W"): 20,
             (3, "W"): 10,
+            # Collector Wild (bonus only - pays + collects)
+            (5, "CW"): 50,
+            (4, "CW"): 20,
+            (3, "CW"): 10,
             # High symbols H1-H5
             (5, "H1"): 50,
             (4, "H1"): 20,
@@ -66,10 +70,6 @@ class GameConfig(Config):
             (5, "L5"): 1,
             (4, "L5"): 0.3,
             (3, "L5"): 0.1,
-            # Collector Wild (bonus only - pays + collects)
-            (5, "CW"): 50,
-            (4, "CW"): 20,
-            (3, "CW"): 10,
         }
 
         self.paylines = {

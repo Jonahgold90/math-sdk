@@ -122,22 +122,7 @@ class GameStateOverride(GameExecutables):
         if self.current_multiplier_index > self.max_multiplier_reached:
             self.max_multiplier_reached = self.current_multiplier_index
             
-        # Debug output for high multiplier levels
-        if self.current_multiplier_index >= 2:  # Level 3 (×3) or higher
-            print(f"HIGH MULTIPLIER REACHED: Level {self.current_multiplier_index + 1} (×{self.config.collector_multipliers[self.current_multiplier_index]}), Total collected chocolate: {self.total_chocolate_collected}, Extra spins granted: {self.total_extra_spins_granted}")
 
-    def get_custom_stat_value(self, custom_key):
-        """Return custom statistic values for analysis."""
-        if custom_key.get("custom_stat") == "max_multiplier_reached":
-            return self.max_multiplier_reached
-        elif custom_key.get("custom_stat") == "total_chocolate_collected":
-            return self.total_chocolate_collected
-        elif custom_key.get("custom_stat") == "total_extra_spins_granted":
-            return self.total_extra_spins_granted
-        elif custom_key.get("custom_stat") == "collectors_collected":
-            return self.collectors_collected
-        else:
-            return super().get_custom_stat_value(custom_key)
 
     def check_repeat(self):
         super().check_repeat()

@@ -25,8 +25,8 @@ if __name__ == "__main__":
     profiling = False
 
     num_sim_args = {
-        "base": int(1e3),
-        "bonus": int(1e3),
+        "base": int(1e5),
+        "bonus": int(1e5),
     }
 
     run_conditions = {
@@ -61,13 +61,19 @@ if __name__ == "__main__":
 
     if run_conditions["run_analysis"]:
         custom_keys = [
-            {"symbol": "scatter"},
-            {"custom_stat": "max_multiplier_reached"},
-            {"custom_stat": "total_chocolate_collected"},
-            {"custom_stat": "total_extra_spins_granted"},
-            {"custom_stat": "collectors_collected"}
+            {"symbol": "scatter"}
         ]
         create_stat_sheet(gamestate, custom_keys=custom_keys)
+        
+        # Run comprehensive Big Bass mechanics analysis
+        print("\n" + "="*50)
+        print("🎣 RUNNING COMPREHENSIVE BIG BASS ANALYSIS...")
+        print("="*50)
+        try:
+            from big_bass_quick_test import main as analyze_big_bass
+            analyze_big_bass()
+        except Exception as e:
+            print(f"❌ Big Bass analysis failed: {e}")
 
     if run_conditions["run_format_checks"]:
         execute_all_tests(config)
