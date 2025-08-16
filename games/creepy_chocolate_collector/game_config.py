@@ -22,7 +22,7 @@ class GameConfig(Config):
         self.working_name = "Creepy Chocolate Collector"
         self.wincap = 10000.0
         self.win_type = "lines"
-        self.rtp = 0.9500
+        self.rtp = 0.9600
         self.construct_paths()
 
         # Game Dimensions
@@ -220,6 +220,7 @@ class GameConfig(Config):
             "wild": ["W", "CW"],
             "scatter": ["JAR"], 
             "cash": ["CC"],
+            "cash_value": ["CC"],
             "multiplier": ["CW"]
         }
 

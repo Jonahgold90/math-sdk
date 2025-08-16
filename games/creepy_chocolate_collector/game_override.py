@@ -50,13 +50,13 @@ class GameStateOverride(GameExecutables):
 
     def assign_collector_properties(self, symbol) -> dict:
         """Assign properties to Collector Wild symbol in bonus."""
-        if self.gametype == self.config.freegame_type:
-            # Collector Wild gets current multiplier and collection ability
-            current_multiplier = self.config.collector_multipliers[self.current_multiplier_index]
-            symbol.assign_attribute({
-                "multiplier": current_multiplier,
-                "collector": True
-            })
+        # Always assign collector property to CW symbols (they only appear in bonus)
+        current_multiplier = self.config.collector_multipliers[self.current_multiplier_index]
+        symbol.assign_attribute({
+            "multiplier": current_multiplier,
+            "collector": True
+        })
+        
 
     def assign_chocolate_cash_value(self, symbol) -> dict:
         """Assign cash value to Chocolate Cash symbol."""
@@ -78,25 +78,55 @@ class GameStateOverride(GameExecutables):
         # Find all Collector Wilds and Chocolate Cash symbols on the board
         collector_count = 0
         chocolate_cash_total = 0
+        cc_count_for_event = 0
         
         for reel_idx, reel in enumerate(self.board):
             for row_idx, symbol in enumerate(reel):
-                if symbol.name == "CW" and hasattr(symbol, 'collector') and symbol.collector:
-                    collector_count += 1
-                elif symbol.name == "CC" and hasattr(symbol, 'cash_value'):
-                    chocolate_cash_total += symbol.cash_value
+                if symbol.name == "CW":
+                    # Count all CW symbols, even without collector attribute
+                    if hasattr(symbol, 'collector') and symbol.collector:
+                        collector_count += 1
+                    else:
+                        # Fallback: treat all CW symbols as collectors in freegame
+                        collector_count += 1
+                elif symbol.name == "CC":
+                    if hasattr(symbol, 'cash_value'):
+                        chocolate_cash_total += symbol.cash_value
+                        cc_count_for_event += 1
+                    else:
+                        # Fallback: assign default cash value if missing
+                        default_value = get_random_outcome(
+                            self.config.padding_symbol_values["CC"]["cash_value"]
+                        )
+                        symbol.assign_attribute({"cash_value": default_value})
+                        chocolate_cash_total += default_value
+                        cc_count_for_event += 1
         
         # Only collect if both collectors and chocolate cash are present
         if collector_count == 0 or chocolate_cash_total == 0:
             return
             
         # Simplified collection logic: (chocolate_cash_total * bet_amount) * collectors * current_multiplier
+        # Debug: Check bounds
+        max_index = len(self.config.collector_multipliers) - 1
+        if self.current_multiplier_index > max_index:
+            print(f"ERROR: multiplier_index={self.current_multiplier_index} > max={max_index}, multipliers={self.config.collector_multipliers}")
+            self.current_multiplier_index = max_index
+        
         current_multiplier = self.config.collector_multipliers[self.current_multiplier_index]
-        collected_value = chocolate_cash_total * collector_count * current_multiplier
+        uncapped_value = chocolate_cash_total * collector_count * current_multiplier
+        collected_value = uncapped_value
+        
+        # Debug logging
+        print(f"DEBUG COLLECTION: CC_total={chocolate_cash_total}, CW_count={collector_count}, multiplier={current_multiplier}")
+        print(f"DEBUG COLLECTION: uncapped={uncapped_value}, running_win={self.win_manager.running_bet_win}, wincap={self.config.wincap}")
         
         # Enforce bonus cap using win manager's running total
         if self.win_manager.running_bet_win + collected_value > self.config.wincap:
             collected_value = self.config.wincap - self.win_manager.running_bet_win
+            print(f"DEBUG COLLECTION: CAPPED to {collected_value}")
+        else:
+            print(f"DEBUG COLLECTION: NOT CAPPED, final={collected_value}")
         
         # Add to current spin wins (only if within cap)  
         if collected_value > 0:
@@ -104,6 +134,16 @@ class GameStateOverride(GameExecutables):
             self.win_manager.update_spinwin(collected_value)
             # Track total chocolate collected for statistics
             self.total_chocolate_collected += chocolate_cash_total
+            
+            # Emit collection event for proper logging
+            self.book.add_event({
+                'type': 'collection',
+                'cw_count': collector_count,
+                'cc_count': cc_count_for_event,
+                'cc_total_value': chocolate_cash_total,
+                'level': self.current_multiplier_index + 1,  # Level 1-4, not multiplier value
+                'collected_amount': collected_value
+            })
         
         # Track collector wilds for multiplier progression
         self.collectors_collected += collector_count
@@ -121,7 +161,6 @@ class GameStateOverride(GameExecutables):
         # Track the highest multiplier level reached
         if self.current_multiplier_index > self.max_multiplier_reached:
             self.max_multiplier_reached = self.current_multiplier_index
-            
 
 
     def check_repeat(self):

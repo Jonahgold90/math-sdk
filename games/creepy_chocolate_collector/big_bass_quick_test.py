@@ -22,19 +22,27 @@ def extract_board_symbols(board):
             symbols.append(cell['name'])
     return symbols
 
-def extract_cc_values(board):
-    """Extract actual CC values if available, otherwise return count-based proxy"""
+def calculate_collection_value(cc_values, cw_count, level_multiplier):
+    """Calculate collection value using Big Bass formula"""
+    if not cc_values or cw_count == 0:
+        return 0
+    
+    cc_sum = sum(cc_values)
+    return cc_sum * cw_count * level_multiplier
+
+def extract_cc_values(board, event=None):
+    """Extract actual CC values from cash_value attribute - NO FALLBACKS"""
     cc_values = []
-    for row in board:
-        for cell in row:
+    
+    for row_idx, row in enumerate(board):
+        for col_idx, cell in enumerate(row):
             if cell['name'] == 'CC':
-                # Try to get actual value, fallback to proxy
-                if 'value' in cell:
-                    cc_values.append(cell['value'])
-                elif 'payout' in cell:
-                    cc_values.append(cell['payout'])
-                else:
-                    cc_values.append(1)  # Proxy value
+                # Only use real cash_value - no fallbacks to ensure data accuracy
+                cash_value = cell.get('cash_value')
+                if cash_value is not None:
+                    cc_values.append(cash_value)
+                # If cash_value is missing, we skip this CC symbol entirely
+    
     return cc_values
 
 def analyze_collector_mechanics(books):
@@ -56,6 +64,8 @@ def analyze_collector_mechanics(books):
         'collected_values': [],  # List of individual collected values
         'dead_spin_streaks': [],  # List of dead spin streak lengths
         'cc_per_spin_distribution': defaultdict(int),  # CC count per individual spin
+        'cw_collected': 0,  # CW symbols that participated in collections
+        'cw_dead': 0,  # CW symbols that didn't collect anything
 
     }
     spins_with_cw = 0
@@ -81,16 +91,16 @@ def analyze_collector_mechanics(books):
         level_this_bonus = 1
         dead_spin_streak = 0
         
-        for event in book['events']:
-            if event.get('type') != 'reveal':
-                continue
-                
+        events = book['events']
+        reveal_events = [(i, event) for i, event in enumerate(events) if event.get('type') == 'reveal']
+        
+        for reveal_index, event in reveal_events:
             spin_count += 1
             analysis['total_bonus_spins'] += 1
             
             board = event.get('board', [])
             symbols = extract_board_symbols(board)
-            cc_values = extract_cc_values(board)
+            cc_values = extract_cc_values(board, event)
             
             cw_on_board = sum(1 for s in symbols if s == 'CW')
             cc_on_board = sum(1 for s in symbols if s == 'CC')
@@ -117,15 +127,20 @@ def analyze_collector_mechanics(books):
             # Level progression (every 4 CWs) - triggers on any CW appearance
             # Level progression (every 4 CWs) — count ANY CWs, even if no CCs
             if cw_on_board > 0:
-                if cw_count_this_bonus >= 12:
+                # Update level based on total CWs accumulated so far (including this spin)
+                total_cws_so_far = cw_count_this_bonus
+                if total_cws_so_far >= 12:
                     level_this_bonus = 4
-                elif cw_count_this_bonus >= 8:
+                elif total_cws_so_far >= 8:
                     level_this_bonus = 3
-                elif cw_count_this_bonus >= 4:
+                elif total_cws_so_far >= 4:
                     level_this_bonus = 2
+                else:
+                    level_this_bonus = 1
 
             
             if cw_on_board > 0 and cc_on_board > 0:
+                # This is a collection event - CW + CC always collect
                 analysis['cw_cc_co_occurrence'] += 1
                 collections_this_bonus += 1
                 
@@ -134,17 +149,10 @@ def analyze_collector_mechanics(books):
                     analysis['dead_spin_streaks'].append(dead_spin_streak)
                 dead_spin_streak = 0  # Reset dead streak
                 
-                # Calculate collected value using actual CC values if available
-                if cc_values and any(v != 1 for v in cc_values):
-                    # Use actual CC values
-                    collected_value = cw_on_board * sum(cc_values) * level_this_bonus
-                else:
-                    # Use proxy: CW count * CC count * level
-                    collected_value = cw_on_board * cc_on_board * level_this_bonus
-                analysis['collected_values'].append(collected_value)
+                # Calculate collection value using Big Bass formula
+                collected_value = calculate_collection_value(cc_values, cw_on_board, level_this_bonus)
                 
-                # Determine if using real values or proxy
-                using_real_values = cc_values and any(v != 1 for v in cc_values)
+                analysis['collected_values'].append(collected_value)
                 
                 analysis['collection_events'].append({
                     'bonus_id': book['id'],
@@ -153,12 +161,16 @@ def analyze_collector_mechanics(books):
                     'cc_count': cc_on_board,
                     'level': level_this_bonus,
                     'collected_value': collected_value,
-                    'cc_values': cc_values if using_real_values else None,
-                    'value_type': 'real' if using_real_values else 'proxy',
+                    'cc_values': cc_values,
+                    'cc_sum': sum(cc_values) if cc_values else 0,
                 })
+                
+                # Track collected CWs (all CWs in CW+CC co-occurrence collect)
+                analysis['cw_collected'] += cw_on_board
                     
             elif cw_on_board > 0 and cc_on_board == 0:
                 analysis['dead_cws'] += cw_on_board
+                analysis['cw_dead'] += cw_on_board
                 dead_spin_streak += 1
                 
             elif cw_on_board == 0 and cc_on_board > 0:
@@ -196,7 +208,11 @@ def main():
     
     print(f"\nCOLLECTOR WILD ANALYSIS:")
     print(f"  Total CW Events: {total_cws:,}")
-    print(f"  Dead CWs (no CC): {analysis['dead_cws']}")
+    print(f"  CWs that collected: {analysis['cw_collected']:,}")
+    print(f"  Dead CWs (no CC): {analysis['cw_dead']:,}")
+    if total_cws > 0:
+        collection_rate = analysis['cw_collected'] / total_cws * 100
+        print(f"  CW collection rate: {collection_rate:.1f}%")
     
     print(f"\nCHOCOLATE CASH ANALYSIS:")
     print(f"  Total CC Events: {total_ccs:,}")
@@ -208,13 +224,30 @@ def main():
     
     if analysis['collection_events']:
         print(f"\nSAMPLE COLLECTION EVENTS:")
-        real_values = sum(1 for event in analysis['collection_events'] if event.get('value_type') == 'real')
-        proxy_values = len(analysis['collection_events']) - real_values
-        print(f"  Value Types: {real_values:,} real, {proxy_values:,} proxy")
+        print(f"  All values calculated using Big Bass formula: CC_sum × CW_count × Level")
         
+        # Enhanced sample display
         for i, event in enumerate(analysis['collection_events'][:5]):
-            value_type = event.get('value_type', 'proxy')
-            print(f"  Event {i+1}: {event['cw_count']} CW + {event['cc_count']} CC at Level {event['level']} = {event['collected_value']} value ({value_type}) (Bonus {event['bonus_id']}, Spin {event['spin']})")
+            cc_sum = event.get('cc_sum', 0)
+            formula_result = cc_sum * event['cw_count'] * event['level']
+            cc_info = f" (CC values: {event['cc_values']}, sum={cc_sum})"
+            print(f"  Event {i+1}: {event['cw_count']} CW + {event['cc_count']} CC at Level {event['level']} = {event['collected_value']} value{cc_info} (Bonus {event['bonus_id']}, Spin {event['spin']})")
+            print(f"    Formula: {cc_sum} × {event['cw_count']} × {event['level']} = {formula_result}")
+        
+        # Value range verification
+        if analysis['collected_values']:
+            min_collected = min(analysis['collected_values'])
+            max_collected = max(analysis['collected_values'])
+            print(f"\n  Collected value range: {min_collected} - {max_collected}")
+            
+            # Check for high-value collections (should reach up to 2000× when such symbols appear)
+            high_values = [v for v in analysis['collected_values'] if v >= 1000]
+            if high_values:
+                print(f"  High-value collections (>=1000): {len(high_values)} events, max: {max(high_values)}")
+            
+            very_high_values = [v for v in analysis['collected_values'] if v >= 2000]
+            if very_high_values:
+                print(f"  Very high collections (>=2000): {len(very_high_values)} events, max: {max(very_high_values)}")
     
     # NEW DETAILED DISTRIBUTIONS
     print(f"\nCW PER BONUS DISTRIBUTION:")
@@ -257,6 +290,16 @@ def main():
         for level in sorted(level_counts.keys()):
             count = level_counts[level]
             print(f"  Reach Level {level}: {count} bonuses ({count/total_bonuses*100:.1f}%)")
+        
+        # Verify level progression from CW counts
+        print(f"\nLEVEL PROGRESSION VERIFICATION (from CW counts):")
+        level_4_plus = sum(1 for cw_count in analysis['cw_per_bonus'] if cw_count >= 4)
+        level_8_plus = sum(1 for cw_count in analysis['cw_per_bonus'] if cw_count >= 8)
+        level_12_plus = sum(1 for cw_count in analysis['cw_per_bonus'] if cw_count >= 12)
+        
+        print(f"  Bonuses with >=4 CWs (Level 2+): {level_4_plus} ({level_4_plus/total_bonuses*100:.1f}%)")
+        print(f"  Bonuses with >=8 CWs (Level 3+): {level_8_plus} ({level_8_plus/total_bonuses*100:.1f}%)")
+        print(f"  Bonuses with >=12 CWs (Level 4): {level_12_plus} ({level_12_plus/total_bonuses*100:.1f}%)")
     
     print(f"\nCOLLECTIONS PER BONUS DISTRIBUTION:")
     if analysis['collections_per_bonus']:
@@ -304,8 +347,8 @@ def main():
         
     # (after your existing print blocks)
     print(f"\nHEADLINE RATES:")
-    print(f"  Spins with ≥1 CW: {analysis['spins_with_cw'] / analysis['total_bonus_spins'] * 100:.1f}%")
-    print(f"  Spins with ≥1 CC: {analysis['spins_with_cc'] / analysis['total_bonus_spins'] * 100:.1f}%")
+    print(f"  Spins with >=1 CW: {analysis['spins_with_cw'] / analysis['total_bonus_spins'] * 100:.1f}%")
+    print(f"  Spins with >=1 CC: {analysis['spins_with_cc'] / analysis['total_bonus_spins'] * 100:.1f}%")
 
 if __name__ == "__main__":
     main()
