@@ -80,7 +80,7 @@ class GameStateOverride(GameExecutables):
         """Handle Big-Bass style Collector Wild collection and level progression."""
         
         if self.gametype != self.config.freegame_type:
-            print(f"DEBUG: Skipping process_collector_wilds - gametype={self.gametype}, freegame_type={self.config.freegame_type}")
+            #print(f"DEBUG: Skipping process_collector_wilds - gametype={self.gametype}, freegame_type={self.config.freegame_type}")
             return
             
         # Check if already at bonus cap
@@ -126,7 +126,7 @@ class GameStateOverride(GameExecutables):
                 # Queue level-up only if it won't exceed Level 4
                 if self.current_level + self.queued_levelups < 4:
                     self.queued_levelups += 1
-                    print(f"DEBUG: Level-up queued! Current level: {self.current_level}, Queued: {self.queued_levelups}")
+                    #print(f"DEBUG: Level-up queued! Current level: {self.current_level}, Queued: {self.queued_levelups}")
         
         # Collection logic (only if both CW and CC present)
         collected_value = 0
@@ -143,9 +143,9 @@ class GameStateOverride(GameExecutables):
             # Enforce bonus cap using win manager's running total
             if self.win_manager.running_bet_win + collected_value > self.config.wincap:
                 collected_value = self.config.wincap - self.win_manager.running_bet_win
-                print(f"DEBUG COLLECTION: CAPPED to {collected_value}")
-            else:
-                print(f"DEBUG COLLECTION: NOT CAPPED, final={collected_value}")
+                #print(f"DEBUG COLLECTION: CAPPED to {collected_value}")
+            # else:
+            #     #print(f"DEBUG COLLECTION: NOT CAPPED, final={collected_value}")
             
             # Add to current spin wins (only if within cap)  
             if collected_value > 0:
@@ -198,10 +198,10 @@ class GameStateOverride(GameExecutables):
                     'spin': self.fs + 1, 
                     'new_level': self.current_level
                 })
-                print(f"DEBUG: Level advanced to {self.current_level} at segment boundary")
+                #print(f"DEBUG: Level advanced to {self.current_level} at segment boundary")
             # Lock the new segment's level
             self.segment_level = self.current_level
-            print(f"DEBUG: New segment started at level {self.segment_level}")
+            #print(f"DEBUG: New segment started at level {self.segment_level}")
 
 
     def check_repeat(self):

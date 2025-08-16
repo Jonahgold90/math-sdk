@@ -33,6 +33,11 @@ def analyze_big_bass_events(books):
             continue
             
         stats['total_bonuses'] += 1
+        
+        # Print progress every 5k books
+        if stats['total_bonuses'] % 5000 == 0:
+            print(f"  Processed {stats['total_bonuses']:,} bonuses...")
+        
         max_level_reached = 1
         
         # Process each event in the bonus

@@ -1,0 +1,208 @@
+# Creepy Chocolate Collector - Book Events Documentation
+
+This document describes all events emitted by the Creepy Chocolate Collector game for frontend integration.
+
+## Event Structure
+
+All events are stored in the `events` array within each book. Each event has a `type` field and additional properties specific to that event type.
+
+## Base Game Events
+
+### `reveal`
+Board reveal for each spin.
+```json
+{
+  "type": "reveal",
+  "board": [
+    [
+      {"name": "L2"},
+      {"name": "H1"},
+      {"name": "JAR", "scatter": true}
+    ]
+  ],
+  "paddingPositions": [70, 162, 212],
+  "gameType": "basegame",
+  "anticipation": [0, 0, 1, 2]
+}
+```
+
+### `setTotalWin`
+Sets the total win amount for the spin.
+```json
+{
+  "type": "setTotalWin",
+  "amount": 500
+}
+```
+
+### `winInfo`
+Details about line wins on the current spin.
+```json
+{
+  "type": "winInfo",
+  "totalWin": 500,
+  "wins": [
+    {
+      "symbol": "H2",
+      "kind": 4,
+      "win": 500,
+      "positions": [
+        {"reel": 0, "row": 3},
+        {"reel": 1, "row": 2}
+      ],
+      "meta": {
+        "lineIndex": 13,
+        "multiplier": 1,
+        "winWithoutMult": 500,
+        "globalMult": 1,
+        "lineMultiplier": 1
+      }
+    }
+  ]
+}
+```
+
+### `freeSpinTrigger`
+Triggered when 3+ scatter symbols appear in base game.
+```json
+{
+  "type": "freeSpinTrigger",
+  "totalFs": 10,
+  "positions": [
+    {"reel": 0, "row": 3},
+    {"reel": 2, "row": 3},
+    {"reel": 4, "row": 3}
+  ]
+}
+```
+
+## Bonus Game Events
+
+### `updateFreeSpin`
+Updates free spin count during bonus.
+```json
+{
+  "type": "updateFreeSpin",
+  "amount": 0,
+  "total": 10
+}
+```
+
+### `collection` ⭐ **NEW BIG-BASS EVENT**
+Emitted when Collector Wilds (CW) collect Chocolate Cash (CC) symbols.
+```json
+{
+  "type": "collection",
+  "spin": 11,
+  "level": 2,
+  "cw_count": 2,
+  "cc_count": 1,
+  "cc_values": [5],
+  "cc_sum": 5,
+  "collected_amount": 10,
+  "payout_per_cw_raw": 5,
+  "subcollections": [
+    {"cw_index": 0, "amount": 5},
+    {"cw_index": 1, "amount": 5}
+  ]
+}
+```
+
+**Collection Event Fields:**
+- `spin`: Current spin number when collection occurred
+- `level`: Segment-locked multiplier level (1-4)
+- `cw_count`: Number of Collector Wild symbols on board
+- `cc_count`: Number of Chocolate Cash symbols on board
+- `cc_values`: Array of individual CC cash values
+- `cc_sum`: Total sum of all CC values
+- `collected_amount`: Final amount credited (may be capped)
+- `payout_per_cw_raw`: Raw payout per CW before capping (cc_sum × level_multiplier)
+- `subcollections`: Array showing payout distribution per CW (handles remainder)
+
+### `level_advance` ⭐ **NEW BIG-BASS EVENT**
+Emitted when the multiplier level advances at segment boundaries.
+```json
+{
+  "type": "level_advance",
+  "spin": 11,
+  "new_level": 2
+}
+```
+
+**Level Advance Fields:**
+- `spin`: Spin number when level advance occurred
+- `new_level`: New multiplier level (2, 3, or 4)
+
+### `setWin`
+Sets win amount and win level for current spin.
+```json
+{
+  "type": "setWin",
+  "amount": 500,
+  "winLevel": 5
+}
+```
+
+### `freeSpinEnd`
+Marks the end of the bonus round.
+```json
+{
+  "type": "freeSpinEnd",
+  "amount": 500,
+  "winLevel": 3
+}
+```
+
+### `finalWin`
+Final win amount for the entire game round.
+```json
+{
+  "type": "finalWin",
+  "amount": 500
+}
+```
+
+## Big-Bass Mechanics Overview
+
+### Level System
+- **4 Levels**: Level 1 (x1), Level 2 (x2), Level 3 (x3), Level 4 (x10)
+- **Segment-based**: Levels are locked for 10-spin segments
+- **Progression**: Every 4 Collector Wilds queue a level-up
+- **Advancement**: Level-ups only occur at segment boundaries (every 10 spins)
+
+### Collection Formula
+```
+collected_amount = cc_sum × cw_count × level_multiplier
+```
+
+### Event Flow Example
+1. Player hits 4 CWs on spin 2 → Level-up queued
+2. Spins 3-10 continue at Level 1 (segment-locked)
+3. Spin 11 → `level_advance` event → Level 2 begins
+4. CW+CC combination on spin 11 → `collection` event at Level 2 (x2 multiplier)
+
+## Frontend Integration Notes
+
+### For Collection Animation
+- Use `cw_count` and `cc_count` to display and animate collecting symbols
+- Use `subcollections` array to show individual CW payouts
+- Display `level` to show current multiplier
+- Use `collected_amount` for final payout display
+
+### For Level Progression UI
+- Track `level_advance` events to trigger level-up animations
+- Show progression toward next level based on CW accumulation
+- Display current segment's locked multiplier
+
+### For Statistics/RTP
+- Sum all `collected_amount` values for total collection contribution
+- Track level distribution from `level_advance` events
+- Monitor collection frequency and values by level
+
+## Symbol Definitions
+
+- **CW (Collector Wild)**: Special wild symbol that collects chocolate cash (freegame mode only)
+- **CC (Chocolate Cash)**: Cash symbols with `cash_value` attribute (2-2000x bet)
+- **JAR**: Scatter symbol that triggers free spins (3+ required)
+- **H1-H4**: High-value regular symbols
+- **L1-L5**: Low-value regular symbols
