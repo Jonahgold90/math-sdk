@@ -19,8 +19,12 @@ class GameStateOverride(GameExecutables):
             self.segment_level = 1  # Locked level for current 10-spin segment
         if not hasattr(self, 'queued_levelups'):
             self.queued_levelups = 0  # Number of pending level-ups
+        if not hasattr(self, 'queued_retrigs'):
+            self.queued_retrigs = 0  # Number of pending retrigs (10 spins each)
         if not hasattr(self, 'spins_in_segment'):
-            self.spins_in_segment = 0  # Current spin within 10-spin segment
+            self.spins_in_segment = 0  # Current spin within current segment
+        if not hasattr(self, 'current_segment_length'):
+            self.current_segment_length = 10  # Length of current segment (first = initial bonus, rest = 10)
         
         # Initialize custom statistics tracking
         if not hasattr(self, 'total_chocolate_collected'):
@@ -36,7 +40,9 @@ class GameStateOverride(GameExecutables):
             self.current_level = 1
             self.segment_level = 1
             self.queued_levelups = 0
+            self.queued_retrigs = 0
             self.spins_in_segment = 0
+            self.current_segment_length = 10
             self.total_chocolate_collected = 0
             self.total_extra_spins_granted = 0
             self.max_multiplier_reached = 0
@@ -120,13 +126,17 @@ class GameStateOverride(GameExecutables):
             # Check for level-up triggers (every 4 CWs)
             while self.cw_progress >= 4:
                 self.cw_progress -= 4  # Reset counter
-                self.tot_fs += 10  # Add 10 extra spins (retrigger)
-                self.total_extra_spins_granted += 10
                 
-                # Queue level-up only if it won't exceed Level 4
+                # Only queue retrigs if we haven't reached level 4 yet
+                # Maximum 3 retrigs: 1 for level 2, 1 for level 3, 1 for level 4
                 if self.current_level + self.queued_levelups < 4:
                     self.queued_levelups += 1
-                    #print(f"DEBUG: Level-up queued! Current level: {self.current_level}, Queued: {self.queued_levelups}")
+                    self.queued_retrigs += 1  # Queue the retrig for segment boundary
+                    #print(f"DEBUG: Level-up and retrig queued! Current level: {self.current_level}, Queued levelups: {self.queued_levelups}, Queued retrigs: {self.queued_retrigs}")
+                else:
+                    # At level 4, no more retrigs allowed
+                    #print(f"DEBUG: Max level reached, no retrig granted")
+                    pass
         
         # Collection logic (only if both CW and CC present)
         collected_value = 0
@@ -187,8 +197,17 @@ class GameStateOverride(GameExecutables):
         
         # End-of-spin segment accounting
         self.spins_in_segment += 1
-        if self.spins_in_segment >= 10:
+        if self.spins_in_segment >= self.current_segment_length:
             self.spins_in_segment = 0
+            
+            # Process level-up and retrig together
+            spins_granted = 0
+            if self.queued_retrigs > 0:
+                spins_granted = self.queued_retrigs * 10
+                self.tot_fs += spins_granted
+                self.total_extra_spins_granted += spins_granted
+                self.queued_retrigs = 0
+            
             # Consume at most one queued level-up per segment
             if self.queued_levelups > 0 and self.current_level < 4:
                 self.current_level += 1
@@ -196,11 +215,14 @@ class GameStateOverride(GameExecutables):
                 self.book.add_event({
                     'type': 'level_advance', 
                     'spin': self.fs + 1, 
-                    'new_level': self.current_level
+                    'new_level': self.current_level,
+                    'extra_spins_granted': spins_granted
                 })
-                #print(f"DEBUG: Level advanced to {self.current_level} at segment boundary")
+                #print(f"DEBUG: Level advanced to {self.current_level} with {spins_granted} extra spins at segment boundary")
             # Lock the new segment's level
             self.segment_level = self.current_level
+            # After first segment, all subsequent segments are 10 spins
+            self.current_segment_length = 10
             #print(f"DEBUG: New segment started at level {self.segment_level}")
 
 

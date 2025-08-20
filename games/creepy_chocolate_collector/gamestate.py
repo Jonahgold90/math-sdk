@@ -32,7 +32,9 @@ class GameState(GameStateOverride):
         self.current_level = 1
         self.segment_level = 1
         self.queued_levelups = 0
+        self.queued_retrigs = 0
         self.spins_in_segment = 0
+        self.current_segment_length = self.tot_fs  # First segment matches initial bonus length
         
         while self.fs < self.tot_fs:
             self.update_freespin()

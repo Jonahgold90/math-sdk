@@ -120,18 +120,20 @@ Emitted when Collector Wilds (CW) collect Chocolate Cash (CC) symbols.
 - `subcollections`: Array showing payout distribution per CW (handles remainder)
 
 ### `level_advance` ⭐ **NEW BIG-BASS EVENT**
-Emitted when the multiplier level advances at segment boundaries.
+Emitted when the multiplier level advances at segment boundaries. Also grants retrigger spins.
 ```json
 {
   "type": "level_advance",
   "spin": 11,
-  "new_level": 2
+  "new_level": 2,
+  "extra_spins_granted": 10
 }
 ```
 
 **Level Advance Fields:**
 - `spin`: Spin number when level advance occurred
 - `new_level`: New multiplier level (2, 3, or 4)
+- `extra_spins_granted`: Number of extra spins granted with this level-up (10 per retrig)
 
 ### `setWin`
 Sets win amount and win level for current spin.
@@ -166,20 +168,24 @@ Final win amount for the entire game round.
 
 ### Level System
 - **4 Levels**: Level 1 (x1), Level 2 (x2), Level 3 (x3), Level 4 (x10)
-- **Segment-based**: Levels are locked for 10-spin segments
-- **Progression**: Every 4 Collector Wilds queue a level-up
-- **Advancement**: Level-ups only occur at segment boundaries (every 10 spins)
+- **Segment-based**: Levels are locked for variable-length segments
+- **First Segment**: Length matches initial bonus (10/15/20 spins based on scatter count)
+- **Subsequent Segments**: Always 10 spins each
+- **Progression**: Every 4 Collector Wilds queue a level-up and retrigger
+- **Advancement**: Level-ups and retriggers occur at segment boundaries
+- **Maximum Retrigs**: 3 total (one each for levels 2, 3, and 4)
 
 ### Collection Formula
 ```
 collected_amount = cc_sum × cw_count × level_multiplier
 ```
 
-### Event Flow Example
-1. Player hits 4 CWs on spin 2 → Level-up queued
-2. Spins 3-10 continue at Level 1 (segment-locked)
-3. Spin 11 → `level_advance` event → Level 2 begins
-4. CW+CC combination on spin 11 → `collection` event at Level 2 (x2 multiplier)
+### Event Flow Example (15-spin initial bonus)
+1. Player gets 4 scatters → 15 initial spins
+2. Player hits 4 CWs on spin 2 → Level-up and retrigger queued
+3. Spins 3-15 continue at Level 1 (segment-locked)
+4. Spin 16 → `level_advance` event with `extra_spins_granted: 10` → Level 2 begins with 10 extra spins
+5. CW+CC combination on spin 16 → `collection` event at Level 2 (x2 multiplier)
 
 ## Frontend Integration Notes
 
@@ -191,8 +197,10 @@ collected_amount = cc_sum × cw_count × level_multiplier
 
 ### For Level Progression UI
 - Track `level_advance` events to trigger level-up animations
-- Show progression toward next level based on CW accumulation
+- Use `extra_spins_granted` field to display retrigger notifications
+- Show progression toward next level based on CW accumulation  
 - Display current segment's locked multiplier
+- Show remaining spins counter (including retriggered spins)
 
 ### For Statistics/RTP
 - Sum all `collected_amount` values for total collection contribution

@@ -10,7 +10,7 @@ def json_ready_sym(symbol: object, special_attributes: list = None):
     print_sym = {"name": symbol.name}
     attrs = vars(symbol)
     for key, val in attrs.items():
-        if key in special_attributes and symbol.get_attribute(key) != False:
+        if key in special_attributes and hasattr(symbol, key) and symbol.get_attribute(key) != False:
             print_sym[key] = val
     return print_sym
 
