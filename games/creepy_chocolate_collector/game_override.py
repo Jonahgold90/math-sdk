@@ -1,5 +1,6 @@
 from game_executables import GameExecutables
 from src.calculations.statistics import get_random_outcome
+from src.events.events import spin_win_total_event
 
 
 class GameStateOverride(GameExecutables):
@@ -26,6 +27,10 @@ class GameStateOverride(GameExecutables):
         if not hasattr(self, 'current_segment_length'):
             self.current_segment_length = 10  # Length of current segment (first = initial bonus, rest = 10)
         
+        # Initialize spin-level win tracking for spinWinTotal event
+        self.spin_line_wins = 0  # Line wins for current spin
+        self.spin_collections = 0  # Collections for current spin
+        
         # Initialize custom statistics tracking
         if not hasattr(self, 'total_chocolate_collected'):
             self.total_chocolate_collected = 0
@@ -46,6 +51,18 @@ class GameStateOverride(GameExecutables):
             self.total_chocolate_collected = 0
             self.total_extra_spins_granted = 0
             self.max_multiplier_reached = 0
+
+    def evaluate_lines_board(self):
+        """Override to capture line wins for spinWinTotal event."""
+        # Reset spin-level tracking at start of each spin
+        self.spin_line_wins = 0
+        self.spin_collections = 0
+        
+        # Call parent implementation
+        super().evaluate_lines_board()
+        
+        # Capture line wins for this spin
+        self.spin_line_wins = self.win_data["totalWin"]
 
     def assign_special_sym_function(self):
         self.special_symbol_functions = {
@@ -163,6 +180,8 @@ class GameStateOverride(GameExecutables):
                 self.win_manager.update_spinwin(collected_value)
                 # Track total chocolate collected for statistics
                 self.total_chocolate_collected += chocolate_cash_total
+                # Track collections for this spin
+                self.spin_collections += collected_value
                 
                 # Calculate per-CW payouts with proper remainder handling
                 payout_per_cw_raw = chocolate_cash_total * segment_multiplier
@@ -224,6 +243,9 @@ class GameStateOverride(GameExecutables):
             # After first segment, all subsequent segments are 10 spins
             self.current_segment_length = 10
             #print(f"DEBUG: New segment started at level {self.segment_level}")
+        
+        # Emit spinWinTotal event after all collections are processed
+        spin_win_total_event(self, self.spin_line_wins, self.spin_collections)
 
 
     def check_repeat(self):

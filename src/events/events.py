@@ -254,6 +254,19 @@ def tumble_board_event(gamestate):
     gamestate.book.add_event(event)
 
 
+def spin_win_total_event(gamestate, line_wins: float, collections: float) -> None:
+    """Emit complete spin total after all collections are processed."""
+    total_amount = line_wins + collections
+    event = {
+        "index": len(gamestate.book.events),
+        "type": "spinWinTotal",
+        "amount": int(round(min(total_amount, gamestate.config.wincap) * 100, 0)),
+        "lineWins": int(round(min(line_wins, gamestate.config.wincap) * 100, 0)),
+        "collections": int(round(min(collections, gamestate.config.wincap) * 100, 0))
+    }
+    gamestate.book.add_event(event)
+
+
 def enter_bonus_event(gamestate) -> None:
     "Indicate feature game entry explicitly."
     event = {

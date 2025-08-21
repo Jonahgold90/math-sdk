@@ -35,6 +35,28 @@ Sets the total win amount for the spin.
 }
 ```
 
+### `spinWinTotal` ⭐ **NEW COMPLETE WIN EVENT**
+Provides complete spin total breakdown for win animations.
+```json
+{
+  "type": "spinWinTotal",
+  "amount": 227,
+  "lineWins": 200,
+  "collections": 27
+}
+```
+
+**Fields:**
+- `amount`: Total win for the spin (line wins + collections)
+- `lineWins`: Win amount from line wins only
+- `collections`: Win amount from collection events only
+
+**Usage:**
+- Emitted after all collections are processed for the spin
+- Frontend can use `amount` directly for win animations
+- Eliminates need for complex calculations and timing issues
+- Always provides accurate, complete spin totals
+
 ### `winInfo`
 Details about line wins on the current spin.
 ```json
