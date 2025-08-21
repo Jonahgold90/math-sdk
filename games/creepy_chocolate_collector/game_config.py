@@ -336,6 +336,84 @@ class GameConfig(Config):
                 ],
             ),
             BetMode(
+                name="antibet",
+                cost=1.5,
+                rtp=self.rtp,
+                max_win=self.wincap,
+                auto_close_disabled=False,
+                is_feature=True,
+                is_buybonus=False,
+                distributions=[
+                    Distribution(
+                        criteria="wincap",
+                        quota=0.001,
+                        win_criteria=self.wincap,
+                        conditions={
+                            "reel_weights": {
+                                self.basegame_type: {"BR0": 1},
+                                self.freegame_type: {"FR0": 1},
+                            },
+                            "mult_values": {
+                                self.basegame_type: {1: 1},
+                                self.freegame_type: {2: 10, 3: 20, 4: 50, 5: 20, 10: 50, 20: 20, 50: 10},
+                            },
+                            "scatter_triggers": {3: 1, 4: 2, 5: 3},
+                            "force_wincap": True,
+                            "force_freegame": True,
+                        },
+                    ),
+                    Distribution(
+                        criteria="freegame",
+                        quota=0.15,
+                        conditions={
+                            "reel_weights": {
+                                self.basegame_type: {"BR0": 1},
+                                self.freegame_type: {"FR0": 1},
+                            },
+                            "scatter_triggers": {3: 70, 4: 20, 5: 10},
+                            "mult_values": {
+                                self.basegame_type: {1: 1},
+                                self.freegame_type: {
+                                    2: 60,
+                                    3: 80,
+                                    4: 50,
+                                    5: 20,
+                                    10: 15,
+                                    20: 10,
+                                    50: 5,
+                                },
+                            },
+                            "force_wincap": False,
+                            "force_freegame": True,
+                        },
+                    ),
+                    Distribution(
+                        criteria="0",
+                        quota=0.35,
+                        win_criteria=0.0,
+                        conditions={
+                            "reel_weights": {self.basegame_type: {"BR0": 1}},
+                            "mult_values": {
+                                self.basegame_type: {1: 1},
+                                self.freegame_type: {2: 100, 3: 80, 4: 50, 5: 20, 10: 10, 20: 5, 50: 1},
+                            },
+                            "force_wincap": False,
+                            "force_freegame": False,
+                        },
+                    ),
+                    Distribution(
+                        criteria="basegame",
+                        quota=0.5,
+                        conditions={
+                            "reel_weights": {self.basegame_type: {"BR0": 1}},
+                            "mult_values": {self.basegame_type: {1: 1}},
+                            "force_wincap": False,
+                            "force_freegame": False,
+                        },
+                    ),
+                ],
+            ),
+            BetMode(
                 name="bonus",
                 cost=100.0,
                 rtp=self.rtp,
