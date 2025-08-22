@@ -132,8 +132,62 @@ Updates free spin count during bonus.
 }
 ```
 
+### `cc_collect_sequence` ⭐ **NEW ANIMATION EVENT**
+Provides deterministic CC → CW collection sequence for frontend animations. Emitted alongside `collection` event.
+```json
+{
+  "type": "cc_collect_sequence",
+  "collections": [
+    {
+      "cw": {"col": 2, "row": 1},
+      "cw_level": 3,
+      "cw_multiplier": 3,
+      "steps": [
+        {"cc": {"col": 0, "row": 0}, "base_value": 10, "multiplier_used": 3, "credited_value": 30},
+        {"cc": {"col": 1, "row": 2}, "base_value": 5, "multiplier_used": 3, "credited_value": 15}
+      ],
+      "total": 45
+    },
+    {
+      "cw": {"col": 4, "row": 0},
+      "cw_level": 3,
+      "cw_multiplier": 3,
+      "steps": [
+        {"cc": {"col": 0, "row": 0}, "base_value": 10, "multiplier_used": 3, "credited_value": 30},
+        {"cc": {"col": 1, "row": 2}, "base_value": 5, "multiplier_used": 3, "credited_value": 15}
+      ],
+      "total": 45
+    }
+  ]
+}
+```
+
+**CC Collect Sequence Fields:**
+- `collections`: Array of CW collection sequences (processed sequentially)
+- `cw`: Position of the collecting Collector Wild (`col` 0-4, `row` 0-2)
+- `cw_level`: Current level (1-4) of the CW
+- `cw_multiplier`: Multiplier value for this level (1x, 2x, 3x, 10x)
+- `steps`: Array of individual CC collections by this CW (ordered left-to-right, top-to-bottom)
+- `cc`: Position of collected Chocolate Cash symbol
+- `base_value`: CC cash value before multiplier
+- `multiplier_used`: CW multiplier applied to this step
+- `credited_value`: Final amount credited for this step (`base_value × multiplier_used`)
+- `total`: Sum of all `credited_value` amounts for this CW
+
+**Animation Rules:**
+1. **Sequential Processing**: CW1 completes all steps, then CW2, etc.
+2. **Full Credit**: Each CW collects every CC independently (no splitting)
+3. **Deterministic Order**: CCs processed left-to-right, top-to-bottom within each CW
+4. **Total Calculation**: Overall collection win = sum of all CW totals
+
+**Example Flow:**
+- Board has 2 CWs and 2 CCs (values 10, 5) at Level 3 (3x multiplier)
+- CW1 collects: CC1(10×3=30) + CC2(5×3=15) = 45 total
+- CW2 collects: CC1(10×3=30) + CC2(5×3=15) = 45 total  
+- Overall collection win: 45 + 45 = 90
+
 ### `collection` ⭐ **NEW BIG-BASS EVENT**
-Emitted when Collector Wilds (CW) collect Chocolate Cash (CC) symbols.
+Legacy collection event for logging and statistics. Emitted alongside `cc_collect_sequence`.
 ```json
 {
   "type": "collection",
@@ -233,7 +287,15 @@ collected_amount = cc_sum × cw_count × level_multiplier
 
 ## Frontend Integration Notes
 
-### For Collection Animation
+### For Collection Animation (Recommended: Use `cc_collect_sequence`)
+- **Primary Event**: Use `cc_collect_sequence` for deterministic animations
+- **Sequential Animation**: Process CWs one at a time in array order
+- **Step Animation**: Within each CW, animate CC collections in `steps` order
+- **Position Mapping**: Use `cw.col`/`cw.row` and `cc.col`/`cc.row` for exact positions
+- **Value Display**: Show `credited_value` for each collection step
+- **Total Display**: Use CW `total` for final CW payout, sum all CW totals for overall win
+
+### For Collection Animation (Legacy: Use `collection`)
 - Use `cw_count` and `cc_count` to display and animate collecting symbols
 - Use `subcollections` array to show individual CW payouts
 - Display `level` to show current multiplier

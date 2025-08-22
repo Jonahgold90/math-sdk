@@ -1,6 +1,6 @@
 from game_executables import GameExecutables
 from src.calculations.statistics import get_random_outcome
-from src.events.events import spin_win_total_event
+from src.events.events import spin_win_total_event, cc_collect_sequence_event
 
 
 class GameStateOverride(GameExecutables):
@@ -111,6 +111,8 @@ class GameStateOverride(GameExecutables):
             return
             
         # Find all Collector Wilds and Chocolate Cash symbols on the board
+        cw_positions = []
+        cc_positions = []
         cw_count_this_spin = 0
         chocolate_cash_total = 0
         cc_count_for_event = 0
@@ -121,11 +123,24 @@ class GameStateOverride(GameExecutables):
                 if symbol.name == "CW":
                     # ALL CWs count for progression (Big-Bass style)
                     cw_count_this_spin += 1
+                    # Store CW position and level info for sequencing
+                    segment_multiplier = self.config.collector_multipliers[self.segment_level - 1]
+                    cw_positions.append({
+                        "col": reel_idx,
+                        "row": row_idx,
+                        "level": self.segment_level,
+                        "multiplier": segment_multiplier
+                    })
                 elif symbol.name == "CC":
                     if hasattr(symbol, 'cash_value'):
                         chocolate_cash_total += symbol.cash_value
                         cc_count_for_event += 1
                         cc_values.append(symbol.cash_value)
+                        cc_positions.append({
+                            "col": reel_idx,
+                            "row": row_idx,
+                            "cash_value": symbol.cash_value
+                        })
                     else:
                         # Fallback: assign default cash value if missing
                         default_value = get_random_outcome(
@@ -135,6 +150,11 @@ class GameStateOverride(GameExecutables):
                         chocolate_cash_total += default_value
                         cc_count_for_event += 1
                         cc_values.append(default_value)
+                        cc_positions.append({
+                            "col": reel_idx,
+                            "row": row_idx,
+                            "cash_value": default_value
+                        })
         
         # Track ALL CWs for progression (whether they collect or not)
         if cw_count_this_spin > 0:
@@ -157,15 +177,51 @@ class GameStateOverride(GameExecutables):
         
         # Collection logic (only if both CW and CC present)
         collected_value = 0
+        collections_sequence = []
+        
         if cw_count_this_spin > 0 and chocolate_cash_total > 0:
-            # Use SEGMENT-LOCKED multiplier
-            segment_multiplier = self.config.collector_multipliers[self.segment_level - 1]
-            uncapped_value = chocolate_cash_total * cw_count_this_spin * segment_multiplier
-            collected_value = uncapped_value
+            # Sort CC positions deterministically: left-to-right, top-to-bottom
+            cc_positions_sorted = sorted(cc_positions, key=lambda cc: (cc["col"], cc["row"]))
+            
+            # Build deterministic collection sequence (non-proportional)
+            # Each CW collects every CC independently with full credit
+            total_collection_value = 0
+            
+            for cw_idx, cw_pos in enumerate(cw_positions):
+                cw_steps = []
+                cw_total = 0
+                
+                # Each CW collects every CC on the board with full multiplier
+                for cc_pos in cc_positions_sorted:
+                    base_value = cc_pos["cash_value"]
+                    multiplier_used = cw_pos["multiplier"]
+                    credited_value = base_value * multiplier_used
+                    cw_total += credited_value
+                    
+                    cw_steps.append({
+                        "cc": {"col": cc_pos["col"], "row": cc_pos["row"]},
+                        "base_value": base_value,
+                        "multiplier_used": multiplier_used,
+                        "credited_value": credited_value
+                    })
+                
+                collections_sequence.append({
+                    "cw": {"col": cw_pos["col"], "row": cw_pos["row"]},
+                    "cw_level": cw_pos["level"],
+                    "cw_multiplier": cw_pos["multiplier"],
+                    "steps": cw_steps,
+                    "total": cw_total
+                })
+                
+                # Add this CW's total to overall collection
+                total_collection_value += cw_total
+            
+            # Use the calculated total collection value
+            collected_value = total_collection_value
             
             # Debug logging
-            #print(f"DEBUG COLLECTION: CC_sum={chocolate_cash_total}, CW_count={cw_count_this_spin}, segment_level={self.segment_level}, multiplier={segment_multiplier}")
-            #print(f"DEBUG COLLECTION: uncapped={uncapped_value}, running_win={self.win_manager.running_bet_win}, wincap={self.config.wincap}")
+            #print(f"DEBUG COLLECTION: CC_sum={chocolate_cash_total}, CW_count={cw_count_this_spin}, segment_level={self.segment_level}")
+            #print(f"DEBUG COLLECTION: uncapped={collected_value}, running_win={self.win_manager.running_bet_win}, wincap={self.config.wincap}")
             
             # Enforce bonus cap using win manager's running total
             if self.win_manager.running_bet_win + collected_value > self.config.wincap:
@@ -183,16 +239,20 @@ class GameStateOverride(GameExecutables):
                 # Track collections for this spin
                 self.spin_collections += collected_value
                 
-                # Calculate per-CW payouts with proper remainder handling
-                payout_per_cw_raw = chocolate_cash_total * segment_multiplier
-                base = collected_value // cw_count_this_spin
-                rem = int(collected_value - base * cw_count_this_spin)
+                # Calculate per-CW payouts for legacy event (proportional to their contribution)
+                payout_per_cw_raw = chocolate_cash_total * self.config.collector_multipliers[self.segment_level - 1]
+                base = collected_value // cw_count_this_spin if cw_count_this_spin > 0 else 0
+                rem = int(collected_value - base * cw_count_this_spin) if cw_count_this_spin > 0 else 0
                 subcollections = []
                 for i in range(cw_count_this_spin):
                     amt = base + (1 if i < rem else 0)
                     subcollections.append({'cw_index': i, 'amount': amt})
                 
-                # Emit collection event for proper logging
+                # Emit deterministic collection sequence event
+                if collections_sequence:
+                    cc_collect_sequence_event(self, collections_sequence)
+                
+                # Emit original collection event for proper logging
                 self.book.add_event({
                     'type': 'collection',
                     'spin': self.fs + 1,  # Current spin number

@@ -267,6 +267,16 @@ def spin_win_total_event(gamestate, line_wins: float, collections: float) -> Non
     gamestate.book.add_event(event)
 
 
+def cc_collect_sequence_event(gamestate, collections: list) -> None:
+    """Emit deterministic CC → CW collection sequence for frontend animations."""
+    event = {
+        "index": len(gamestate.book.events),
+        "type": "cc_collect_sequence",
+        "collections": collections
+    }
+    gamestate.book.add_event(event)
+
+
 def enter_bonus_event(gamestate) -> None:
     "Indicate feature game entry explicitly."
     event = {
