@@ -30,14 +30,14 @@ class GameConfig(Config):
         self.num_rows = [3] * self.num_reels
         # Board and Symbol Properties
         self.paytable = {
-            # Wild (base game only - no collection)
-            (5, "W"): 50,
-            (4, "W"): 20,
-            (3, "W"): 10,
-            # Collector Wild (bonus only - pays + collects)
-            (5, "CW"): 50,
-            (4, "CW"): 20,
-            (3, "CW"): 10,
+            # CC (base game only - no collection)
+            (5, "CC"): 6,
+            (4, "CC"): 1.5,
+            (3, "CC"): 0.5,
+            # # Collector Wild (bonus only - pays + collects)
+            # (5, "CW"): 50,
+            # (4, "CW"): 20,
+            # (3, "CW"): 10,
             # High symbols H1-H5
             (5, "H1"): 50,
             (4, "H1"): 20,

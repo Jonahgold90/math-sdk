@@ -25,8 +25,12 @@ class OptimizationSetup:
                 },
                 "scaling": ConstructScaling(
                     [
-                        {"criteria": "basegame", "scale_factor": 1.2, "win_range": (1, 3), "probability": 1.0},
+                        {"criteria": "basegame", "scale_factor": 1.3, "win_range": (1, 3), "probability": 1.0},
                         {"criteria": "basegame", "scale_factor": 1.5, "win_range": (5, 15), "probability": 1.0},
+                        # Basegame bands (tuned down so they’re less frequent)
+                        {"criteria": "basegame", "scale_factor": 0.4, "win_range": (20, 50), "probability": 1.0},
+                        {"criteria": "basegame", "scale_factor": 0.3, "win_range": (50, 100), "probability": 1.0},
+
                         {
                             "criteria": "freegame",
                             "scale_factor": 0.9,
@@ -133,8 +137,12 @@ class OptimizationSetup:
                 },
                 "scaling": ConstructScaling(
                     [
-                        {"criteria": "basegame", "scale_factor": 1.2, "win_range": (1, 3), "probability": 1.0},
+                        {"criteria": "basegame", "scale_factor": 1.3, "win_range": (1, 3), "probability": 1.0},
                         {"criteria": "basegame", "scale_factor": 1.5, "win_range": (5, 15), "probability": 1.0},
+                        # Basegame bands (tuned down so they’re less frequent)
+                        {"criteria": "basegame", "scale_factor": 0.4, "win_range": (20, 50), "probability": 1.0},
+                        {"criteria": "basegame", "scale_factor": 0.3, "win_range": (50, 100), "probability": 1.0},
+
                         {
                             "criteria": "freegame",
                             "scale_factor": 0.9,

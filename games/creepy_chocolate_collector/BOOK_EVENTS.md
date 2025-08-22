@@ -2,11 +2,33 @@
 
 This document describes all events emitted by the Creepy Chocolate Collector game for frontend integration.
 
+## Bet Modes
+
+The game supports three bet modes:
+
+### Base Mode
+- **Cost**: 1.0x bet
+- **Feature frequency**: 1 in 100 spins (average)
+- **Description**: Standard gameplay with normal scatter hit rate
+
+### Anti Bet Mode 
+- **Cost**: 1.5x bet (50% increase)
+- **Feature frequency**: 1 in 67 spins (average) - 50% more frequent
+- **Description**: Higher cost mode with increased scatter hit rate for more bonus triggers
+- **Use case**: Players who want more frequent bonuses at higher cost
+
+### Bonus Buy Mode
+- **Cost**: 100x bet
+- **Feature frequency**: Guaranteed bonus
+- **Description**: Direct purchase of bonus round
+
 ## Event Structure
 
 All events are stored in the `events` array within each book. Each event has a `type` field and additional properties specific to that event type.
 
-## Base Game Events
+## Base Game Events (Base & Anti Bet Modes)
+
+The following events are shared between Base Mode and Anti Bet Mode, as they use identical game mechanics - only the scatter frequency differs.
 
 ### `reveal`
 Board reveal for each spin.
