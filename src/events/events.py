@@ -277,6 +277,17 @@ def cc_collect_sequence_event(gamestate, collections: list) -> None:
     gamestate.book.add_event(event)
 
 
+def cw_landed_event(gamestate, count: int, total_cws: int) -> None:
+    """Emit when Collector Wilds land on the board during bonus."""
+    event = {
+        "index": len(gamestate.book.events),
+        "type": "cwLanded",
+        "count": count,
+        "totalCws": total_cws
+    }
+    gamestate.book.add_event(event)
+
+
 def enter_bonus_event(gamestate) -> None:
     "Indicate feature game entry explicitly."
     event = {

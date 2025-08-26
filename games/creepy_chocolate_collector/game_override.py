@@ -1,6 +1,6 @@
 from game_executables import GameExecutables
 from src.calculations.statistics import get_random_outcome
-from src.events.events import spin_win_total_event, cc_collect_sequence_event
+from src.events.events import spin_win_total_event, cc_collect_sequence_event, cw_landed_event
 
 
 class GameStateOverride(GameExecutables):
@@ -158,6 +158,11 @@ class GameStateOverride(GameExecutables):
         
         # Track ALL CWs for progression (whether they collect or not)
         if cw_count_this_spin > 0:
+            # Emit cwLanded event after reels stop, before win animations start
+            # Calculate total CWs (this spin + previous progress)
+            total_cws_accumulated = self.cw_progress + cw_count_this_spin
+            cw_landed_event(self, cw_count_this_spin, total_cws_accumulated)
+            
             self.cw_progress += cw_count_this_spin
             
             # Check for level-up triggers (every 4 CWs)

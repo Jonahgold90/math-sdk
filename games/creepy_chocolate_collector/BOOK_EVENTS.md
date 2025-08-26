@@ -132,6 +132,24 @@ Updates free spin count during bonus.
 }
 ```
 
+### `cwLanded` ⭐ **NEW CW ANIMATION EVENT**
+Emitted when Collector Wild (CW) symbols land on the board during bonus rounds.
+```json
+{
+  "type": "cwLanded",
+  "count": 2,
+  "totalCws": 6
+}
+```
+
+**Fields:**
+- `count`: Number of CW symbols that landed this spin
+- `totalCws`: Total CW symbols accumulated since bonus start
+
+**Timing:** Emitted after reels stop, before win animations start
+**Trigger:** Only emitted if ≥1 CW symbol lands on the visible 3×5 board
+**Usage:** Frontend can subscribe to animate CW landing effects and update progression UI
+
 ### `cc_collect_sequence` ⭐ **NEW ANIMATION EVENT**
 Provides deterministic CC → CW collection sequence for frontend animations. Emitted alongside `collection` event.
 ```json
@@ -286,6 +304,12 @@ collected_amount = cc_sum × cw_count × level_multiplier
 5. CW+CC combination on spin 16 → `collection` event at Level 2 (x2 multiplier)
 
 ## Frontend Integration Notes
+
+### For CW Landing Animation (Use `cwLanded`)
+- **Primary Event**: Use `cwLanded` for CW symbol landing animations
+- **Landing Animation**: Animate the `count` CWs that just landed on the board
+- **Progression UI**: Use `totalCws` to update level progression indicators
+- **Timing**: Process this event before any collection animations to show CWs landing first
 
 ### For Collection Animation (Recommended: Use `cc_collect_sequence`)
 - **Primary Event**: Use `cc_collect_sequence` for deterministic animations
