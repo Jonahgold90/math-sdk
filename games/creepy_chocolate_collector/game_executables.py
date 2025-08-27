@@ -1,5 +1,6 @@
 from game_calculations import GameCalculations
 from src.calculations.lines import Lines
+from src.events.events import win_info_event, set_win_event, set_total_event
 
 
 class GameExecutables(GameCalculations):
@@ -18,4 +19,9 @@ class GameExecutables(GameCalculations):
         )
         Lines.record_lines_wins(self)
         self.win_manager.update_spinwin(self.win_data["totalWin"])
-        Lines.emit_linewin_events(self)
+        
+        # Custom event emission for creepy chocolate collector
+        # Skip set_win_event AND set_total_event here - they will be called after collections are processed
+        if self.win_manager.spin_win > 0:
+            win_info_event(self)
+            self.evaluate_wincap()

@@ -311,6 +311,12 @@ class GameStateOverride(GameExecutables):
         
         # Emit spinWinTotal event after all collections are processed
         spin_win_total_event(self, self.spin_line_wins, self.spin_collections)
+        
+        # Now emit standard win events - win_manager.spin_win already contains total amount
+        from src.events.events import set_win_event, set_total_event
+        if self.win_manager.spin_win > 0:
+            set_win_event(self)
+        set_total_event(self)
 
 
     def check_repeat(self):

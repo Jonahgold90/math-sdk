@@ -5,6 +5,7 @@
       "Bash(python:*)",
       "Bash(grep:*)",
       "Bash(timeout:*)",
+      "Bash(PYTHONPATH=. python -c \"from games.creepy_chocolate_collector.gamestate import GameState; print(''Implementation compiles successfully'')\")",
       "Bash(PYTHONPATH=. python -c \"from games.creepy_chocolate_collector.gamestate import GameState; print(''Implementation compiles successfully'')\")"
     ],
     "deny": [],
