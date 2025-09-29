@@ -1,6 +1,7 @@
 {
   "permissions": {
     "allow": [
+<<<<<<< HEAD
       "Bash(mkdir:*)",
       "Bash(python:*)",
       "Bash(make:*)",
@@ -8,5 +9,16 @@
       "Bash(grep:*)"
     ],
     "deny": []
+=======
+      "Bash(sed:*)",
+      "Bash(python:*)",
+      "Bash(grep:*)",
+      "Bash(timeout:*)",
+      "Bash(PYTHONPATH=. python -c \"from games.creepy_chocolate_collector.gamestate import GameState; print(''Implementation compiles successfully'')\")",
+      "Bash(PYTHONPATH=. python -c \"from games.creepy_chocolate_collector.gamestate import GameState; print(''Implementation compiles successfully'')\")"
+    ],
+    "deny": [],
+    "ask": []
+>>>>>>> 5c04b38358780d5d9d6883d8cd78c0d5cfbca819
   }
 }

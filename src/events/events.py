@@ -10,7 +10,7 @@ def json_ready_sym(symbol: object, special_attributes: list = None):
     print_sym = {"name": symbol.name}
     attrs = vars(symbol)
     for key, val in attrs.items():
-        if key in special_attributes and symbol.get_attribute(key) != False:
+        if key in special_attributes and hasattr(symbol, key) and symbol.get_attribute(key) != False:
             print_sym[key] = val
     return print_sym
 
@@ -250,6 +250,40 @@ def tumble_board_event(gamestate):
         "type": EventConstants.TUMBLE_BOARD.value,
         "newSymbols": new_symbols,
         "explodingSymbols": exploding,
+    }
+    gamestate.book.add_event(event)
+
+
+def spin_win_total_event(gamestate, line_wins: float, collections: float) -> None:
+    """Emit complete spin total after all collections are processed."""
+    total_amount = line_wins + collections
+    event = {
+        "index": len(gamestate.book.events),
+        "type": "spinWinTotal",
+        "amount": int(round(min(total_amount, gamestate.config.wincap) * 100, 0)),
+        "lineWins": int(round(min(line_wins, gamestate.config.wincap) * 100, 0)),
+        "collections": int(round(min(collections, gamestate.config.wincap) * 100, 0))
+    }
+    gamestate.book.add_event(event)
+
+
+def cc_collect_sequence_event(gamestate, collections: list) -> None:
+    """Emit deterministic CC → CW collection sequence for frontend animations."""
+    event = {
+        "index": len(gamestate.book.events),
+        "type": "cc_collect_sequence",
+        "collections": collections
+    }
+    gamestate.book.add_event(event)
+
+
+def cw_landed_event(gamestate, count: int, total_cws: int) -> None:
+    """Emit when Collector Wilds land on the board during bonus."""
+    event = {
+        "index": len(gamestate.book.events),
+        "type": "cwLanded",
+        "count": count,
+        "totalCws": total_cws
     }
     gamestate.book.add_event(event)
 
