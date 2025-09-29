@@ -10,8 +10,8 @@ from utils.game_analytics.retrieve_game_information import GameInformation
 from utils.game_analytics.print_all_results import PrintJSON, PrintXLSX
 
 
-def create_stat_sheet(game: str, custom_keys: List[Dict] = None):
+def create_stat_sheet(gamestate: object, custom_keys: List[Dict] = None):
     """Function executed from run file."""
-    game_obj = GameInformation(game, custom_keys=custom_keys)
+    game_obj = GameInformation(gamestate, custom_keys=custom_keys)
     PrintJSON(game_obj)
     PrintXLSX(game_obj)
