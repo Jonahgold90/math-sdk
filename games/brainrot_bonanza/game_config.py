@@ -127,8 +127,23 @@ class GameConfig(Config):
                                 self.freegame_type: {"FR0": 1},
                             },
                             "mult_values": {
-                                self.basegame_type: {2: 100, 4: 80, 5: 50, 7: 20, 10: 10},
-                                self.freegame_type: {2: 100, 4: 80, 5: 50, 7: 20, 10: 10},
+                                self.basegame_type: {},  # No multipliers in base game
+                                self.freegame_type: {
+                                    2: 100,    # ~22% chance
+                                    3: 80,     # ~18% chance
+                                    4: 70,     # ~15% chance
+                                    5: 50,     # ~11% chance
+                                    6: 40,     # ~9% chance
+                                    8: 30,     # ~7% chance
+                                    10: 25,    # ~5.5% chance
+                                    12: 20,    # ~4.4% chance
+                                    15: 15,    # ~3.3% chance
+                                    20: 10,    # ~2.2% chance
+                                    25: 8,     # ~1.8% chance
+                                    50: 5,     # ~1.1% chance
+                                    100: 2,    # ~0.4% chance
+                                    1000: 1    # ~0.2% chance
+                                },
                             },
                             "scatter_triggers": {4: 1, 5: 2},
                             "force_wincap": True,
@@ -145,8 +160,23 @@ class GameConfig(Config):
                             },
                             "scatter_triggers": {4: 5, 5: 1},
                             "mult_values": {
-                                self.basegame_type: {2: 100, 3: 80, 4: 50, 5: 20, 10: 10},
-                                self.freegame_type: {2: 100, 4: 80, 5: 50, 7: 20, 10: 10},
+                                self.basegame_type: {},  # No multipliers in base game
+                                self.freegame_type: {
+                                    2: 100,    # ~22% chance
+                                    3: 80,     # ~18% chance
+                                    4: 70,     # ~15% chance
+                                    5: 50,     # ~11% chance
+                                    6: 40,     # ~9% chance
+                                    8: 30,     # ~7% chance
+                                    10: 25,    # ~5.5% chance
+                                    12: 20,    # ~4.4% chance
+                                    15: 15,    # ~3.3% chance
+                                    20: 10,    # ~2.2% chance
+                                    25: 8,     # ~1.8% chance
+                                    50: 5,     # ~1.1% chance
+                                    100: 2,    # ~0.4% chance
+                                    1000: 1    # ~0.2% chance
+                                },
                             },
                             "force_wincap": False,
                             "force_freegame": True,
@@ -159,8 +189,23 @@ class GameConfig(Config):
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}},
                             "mult_values": {
-                                self.basegame_type: {2: 100, 4: 80, 5: 50, 7: 20, 10: 10},
-                                self.freegame_type: {2: 100, 4: 80, 5: 50, 7: 20, 10: 10},
+                                self.basegame_type: {},  # No multipliers in base game
+                                self.freegame_type: {
+                                    2: 100,    # ~22% chance
+                                    3: 80,     # ~18% chance
+                                    4: 70,     # ~15% chance
+                                    5: 50,     # ~11% chance
+                                    6: 40,     # ~9% chance
+                                    8: 30,     # ~7% chance
+                                    10: 25,    # ~5.5% chance
+                                    12: 20,    # ~4.4% chance
+                                    15: 15,    # ~3.3% chance
+                                    20: 10,    # ~2.2% chance
+                                    25: 8,     # ~1.8% chance
+                                    50: 5,     # ~1.1% chance
+                                    100: 2,    # ~0.4% chance
+                                    1000: 1    # ~0.2% chance
+                                },
                             },
                             "force_wincap": False,
                             "force_freegame": False,
@@ -171,7 +216,25 @@ class GameConfig(Config):
                         quota=0.5,
                         conditions={
                             "reel_weights": {self.basegame_type: {"BR0": 1}},
-                            "mult_values": {self.basegame_type: {2: 100, 4: 80, 5: 50, 7: 20, 10: 10}},
+                            "mult_values": {
+                                self.basegame_type: {},  # No multipliers in base game
+                                self.freegame_type: {
+                                    2: 1000,   # Very common
+                                    3: 500,    # Common
+                                    4: 300,    # Common
+                                    5: 200,    # Uncommon
+                                    6: 150,    # Uncommon
+                                    8: 100,    # Rare
+                                    10: 80,    # Rare
+                                    12: 60,    # Rare
+                                    15: 40,    # Very rare
+                                    20: 20,    # Very rare
+                                    25: 10,    # Very rare
+                                    50: 5,     # Extremely rare
+                                    100: 2,    # Extremely rare
+                                    1000: 1    # Extremely rare
+                                }
+                            },
                             "force_wincap": False,
                             "force_freegame": False,
                         },
@@ -197,8 +260,23 @@ class GameConfig(Config):
                                 self.freegame_type: {"FR0": 1},
                             },
                             "mult_values": {
-                                self.basegame_type: {2: 100, 4: 80, 5: 50, 7: 20, 10: 10},
-                                self.freegame_type: {2: 100, 4: 80, 5: 50, 7: 20, 10: 10},
+                                self.basegame_type: {},  # No multipliers in base game
+                                self.freegame_type: {
+                                    2: 100,    # ~22% chance
+                                    3: 80,     # ~18% chance
+                                    4: 70,     # ~15% chance
+                                    5: 50,     # ~11% chance
+                                    6: 40,     # ~9% chance
+                                    8: 30,     # ~7% chance
+                                    10: 25,    # ~5.5% chance
+                                    12: 20,    # ~4.4% chance
+                                    15: 15,    # ~3.3% chance
+                                    20: 10,    # ~2.2% chance
+                                    25: 8,     # ~1.8% chance
+                                    50: 5,     # ~1.1% chance
+                                    100: 2,    # ~0.4% chance
+                                    1000: 1    # ~0.2% chance
+                                },
                             },
                             "scatter_triggers": {4: 10, 5: 5, 6: 1},
                             "force_wincap": True,
@@ -215,8 +293,23 @@ class GameConfig(Config):
                             },
                             "scatter_triggers": {4: 10, 5: 5, 6: 1},
                             "mult_values": {
-                                self.basegame_type: {2: 100, 4: 80, 5: 50, 7: 20, 10: 10},
-                                self.freegame_type: {2: 100, 4: 80, 5: 50, 7: 20, 10: 10},
+                                self.basegame_type: {},  # No multipliers in base game
+                                self.freegame_type: {
+                                    2: 100,    # ~22% chance
+                                    3: 80,     # ~18% chance
+                                    4: 70,     # ~15% chance
+                                    5: 50,     # ~11% chance
+                                    6: 40,     # ~9% chance
+                                    8: 30,     # ~7% chance
+                                    10: 25,    # ~5.5% chance
+                                    12: 20,    # ~4.4% chance
+                                    15: 15,    # ~3.3% chance
+                                    20: 10,    # ~2.2% chance
+                                    25: 8,     # ~1.8% chance
+                                    50: 5,     # ~1.1% chance
+                                    100: 2,    # ~0.4% chance
+                                    1000: 1    # ~0.2% chance
+                                },
                             },
                             "force_wincap": False,
                             "force_freegame": True,
