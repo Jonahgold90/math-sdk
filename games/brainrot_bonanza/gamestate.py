@@ -1,5 +1,6 @@
 from game_override import GameStateOverride
 from src.calculations.scatter import Scatter
+from game_events import send_multiplier_landed_event
 
 
 class GameState(GameStateOverride):
@@ -17,6 +18,7 @@ class GameState(GameStateOverride):
 
             while self.win_data["totalWin"] > 0 and not (self.wincap_triggered):
                 self.tumble_game_board()
+                send_multiplier_landed_event(self)  # Check for new multipliers after tumble
                 self.get_scatterpays_update_wins()
 
             self.set_end_tumble_event()
@@ -36,12 +38,14 @@ class GameState(GameStateOverride):
             # Resets global multiplier at each spin
             self.update_freespin()
             self.draw_board()
+            send_multiplier_landed_event(self)  # Check for multipliers on initial board
 
             self.get_scatterpays_update_wins()
             self.emit_tumble_win_events()  # Transmit win information
 
             while self.win_data["totalWin"] > 0 and not (self.wincap_triggered):
                 self.tumble_game_board()
+                send_multiplier_landed_event(self)  # Check for new multipliers after tumble
                 self.get_scatterpays_update_wins()
 
             self.set_end_tumble_event()
