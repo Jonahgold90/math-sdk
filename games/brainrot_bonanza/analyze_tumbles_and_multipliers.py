@@ -178,15 +178,21 @@ def analyze_all_books(books_data: List[Dict], game_mode: str) -> Dict:
         'free_tumbles_per_bonus': [],  # Total tumbles for entire bonus round
 
         # Multiplier data (free game only)
-        'multiplier_values': [],  # Individual M symbol values
+        'multiplier_values': [],  # Individual M symbol values (used multipliers only)
+        'multiplier_values_landed': [],  # All M symbols that land (whether used or not)
         'multiplier_sums_per_spin': [],  # Sum of multipliers per free spin (when present)
-        'multiplier_frequency': 0,  # % of free spins with multipliers
+        'multiplier_frequency': 0,  # % of free spins with multipliers used
+        'multiplier_land_frequency': 0,  # % of free spins with multipliers landed
         'multiplier_win_impact': [],  # Multiplier factor applied to wins
+        'spins_with_landed_mult': 0,
+        'retrigger_counts': [],  # Number of retriggers per bonus
+        'retrigger_amounts': [],  # Amount of free spins awarded per retrigger
 
         # Detailed breakdowns
         'base_tumble_breakdown': Counter(),
         'free_tumble_breakdown': Counter(),
         'multiplier_value_breakdown': Counter(),
+        'multiplier_landed_breakdown': Counter(),
     }
 
     # Analyze base game books
@@ -209,21 +215,64 @@ def analyze_all_books(books_data: List[Dict], game_mode: str) -> Dict:
         current_spin_tumbles = 0
 
         # Track multipliers
-        bonus_multiplier_values = []
+        bonus_multiplier_values = []  # Only multipliers that were used (from boardMultiplierInfo)
         bonus_multiplier_sums = []
         spins_with_multipliers = 0
 
+        # Track ALL multipliers that land (whether used or not)
+        bonus_multiplier_values_landed = []  # All M symbols that land (from multiplierLanded)
+        current_spin_has_landed_mult = False  # Track if current spin has landed multipliers
+
+        # Track retriggers
+        retrigger_count = 0
+        retrigger_amounts = []
+
+        # Simply count reveals in free spin books (first reveal is base game trigger)
+        reveal_count = 0
+        free_spin_count = 0
+
         for event in events:
-            if event.get('type') == 'updateFreeSpin':
-                # New free spin started, save previous spin's tumbles
-                if current_spin_tumbles > 0 or len(individual_spin_tumbles) == 0:
+            if event.get('type') == 'reveal':
+                reveal_count += 1
+
+                # Skip the first reveal which is the base game trigger
+                if reveal_count == 1:
+                    current_spin_tumbles = 0
+                    current_spin_has_landed_mult = False
+                    continue
+
+                # This is a free spin
+                free_spin_count += 1
+
+                # Save previous spin's tumbles (for spins after the first free spin)
+                if free_spin_count > 1:
                     individual_spin_tumbles.append(current_spin_tumbles)
                     analysis_data['free_tumble_breakdown'][current_spin_tumbles] += 1
+
+                    # Count spin with multipliers if any landed during the previous spin
+                    if current_spin_has_landed_mult:
+                        analysis_data['spins_with_landed_mult'] += 1
+
                 current_spin_tumbles = 0
+                current_spin_has_landed_mult = False  # Reset for new spin
 
             elif event.get('type') == 'tumbleBoard':
                 current_spin_tumbles += 1
                 total_bonus_tumbles += 1
+
+            elif event.get('type') == 'multiplierLanded':
+                # Track ALL multipliers that land (whether used or not)
+                for mult in event.get('multipliers', []):
+                    mult_value = mult.get('value', 0)
+                    if mult_value > 0:
+                        bonus_multiplier_values_landed.append(mult_value)
+                        current_spin_has_landed_mult = True  # Mark this spin as having multipliers
+
+            elif event.get('type') == 'freeSpinRetrigger':
+                # This is an actual retrigger during free spins
+                retrigger_count += 1
+                # Math spec: 3+ scatters → +5 spins during free games
+                retrigger_amounts.append(5)  # Fixed +5 FS per retrigger
 
             elif event.get('type') == 'boardMultiplierInfo':
                 # Multiplier collection event
@@ -248,25 +297,35 @@ def analyze_all_books(books_data: List[Dict], game_mode: str) -> Dict:
                         impact_factor = total_win / tumble_win
                         analysis_data['multiplier_win_impact'].append(impact_factor)
 
-        # Add final spin's tumbles
-        if current_spin_tumbles > 0 or len(individual_spin_tumbles) == 0:
+        # Add final spin's tumbles if we had any free spins
+        if free_spin_count > 0:
             individual_spin_tumbles.append(current_spin_tumbles)
             analysis_data['free_tumble_breakdown'][current_spin_tumbles] += 1
+
+            # Count final spin with multipliers if any landed
+            if current_spin_has_landed_mult:
+                analysis_data['spins_with_landed_mult'] += 1
 
         # Store data
         analysis_data['free_tumbles_per_bonus'].append(total_bonus_tumbles)
         analysis_data['free_tumbles_per_individual_spin'].extend(individual_spin_tumbles)
-        analysis_data['multiplier_values'].extend(bonus_multiplier_values)
+        analysis_data['multiplier_values'].extend(bonus_multiplier_values)  # Used multipliers
+        analysis_data['multiplier_values_landed'].extend(bonus_multiplier_values_landed)  # All landed multipliers
         analysis_data['multiplier_sums_per_spin'].extend(bonus_multiplier_sums)
+        analysis_data['retrigger_counts'].append(retrigger_count)
+        analysis_data['retrigger_amounts'].extend(retrigger_amounts)
 
-        # Count multiplier value occurrences
+        # Count multiplier value occurrences (used vs landed)
         for value in bonus_multiplier_values:
             analysis_data['multiplier_value_breakdown'][value] += 1
+        for value in bonus_multiplier_values_landed:
+            analysis_data['multiplier_landed_breakdown'][value] += 1
 
-    # Calculate multiplier frequency
+    # Calculate multiplier frequencies
     total_free_spins = len(analysis_data['free_tumbles_per_individual_spin'])
     if total_free_spins > 0:
         analysis_data['multiplier_frequency'] = (len(analysis_data['multiplier_sums_per_spin']) / total_free_spins) * 100
+        analysis_data['multiplier_land_frequency'] = (analysis_data['spins_with_landed_mult'] / total_free_spins) * 100
 
     return analysis_data
 
@@ -320,21 +379,26 @@ def print_detailed_analysis(data: Dict):
             print(f"   Max tumbles in a bonus: {max(data['free_tumbles_per_bonus'])}")
 
     # Multiplier Analysis
-    if data['multiplier_values']:
+    if data['multiplier_values_landed']:
         print(f"\nMULTIPLIER ANALYSIS (Free Spins Only)")
-        print(f"   Total M symbols landed: {len(data['multiplier_values']):,}")
-        print(f"   Average M symbol value: {statistics.mean(data['multiplier_values']):.1f}x")
-        print(f"   Median M symbol value: {statistics.median(data['multiplier_values']):.1f}x")
-        print(f"   Multiplier frequency: {data['multiplier_frequency']:.1f}% of free spins have multipliers")
+        print(f"   Total M symbols that landed: {len(data['multiplier_values_landed']):,}")
+        print(f"   Total M symbols that were used: {len(data['multiplier_values']):,}")
+        print(f"   Average M symbol value (landed): {statistics.mean(data['multiplier_values_landed']):.1f}x")
+        print(f"   Median M symbol value (landed): {statistics.median(data['multiplier_values_landed']):.1f}x")
+        print(f"   Multiplier land frequency: {data['multiplier_land_frequency']:.1f}% of free spins have M symbols")
+        print(f"   Multiplier use frequency: {data['multiplier_frequency']:.1f}% of free spins use multipliers")
 
-        print(f"\n   Multiplier Value Distribution:")
-        for value in sorted(data['multiplier_value_breakdown'].keys()):
-            count = data['multiplier_value_breakdown'][value]
-            pct = (count / len(data['multiplier_values'])) * 100
+        usage_rate = (len(data['multiplier_values']) / len(data['multiplier_values_landed'])) * 100 if data['multiplier_values_landed'] else 0
+        print(f"   Multiplier usage rate: {usage_rate:.1f}% of landed M symbols get used")
+
+        print(f"\n   Multiplier Value Distribution (All Landed):")
+        for value in sorted(data['multiplier_landed_breakdown'].keys()):
+            count = data['multiplier_landed_breakdown'][value]
+            pct = (count / len(data['multiplier_values_landed'])) * 100
             print(f"     {value}x: {count:,} symbols ({pct:.1f}%)")
 
         if data['multiplier_sums_per_spin']:
-            print(f"\n   Multiplier Sums (When Present):")
+            print(f"\n   Multiplier Sums (When Used):")
             print(f"     Average sum per FS: {statistics.mean(data['multiplier_sums_per_spin']):.1f}x")
             print(f"     Median sum per FS: {statistics.median(data['multiplier_sums_per_spin']):.1f}x")
             print(f"     Max sum in a FS: {max(data['multiplier_sums_per_spin']):.1f}x")
@@ -345,6 +409,27 @@ def print_detailed_analysis(data: Dict):
             print(f"     Average multiplier factor: {statistics.mean(data['multiplier_win_impact']):.1f}x")
             print(f"     Median multiplier factor: {statistics.median(data['multiplier_win_impact']):.1f}x")
             print(f"     Max multiplier factor: {max(data['multiplier_win_impact']):.1f}x")
+
+    # Retrigger Analysis
+    if data['retrigger_counts']:
+        print(f"\nRETRIGGER ANALYSIS (Free Spins Only)")
+        total_bonuses = len(data['retrigger_counts'])
+        bonuses_with_retriggers = len([x for x in data['retrigger_counts'] if x > 0])
+        print(f"   Total bonus rounds: {total_bonuses:,}")
+        print(f"   Bonuses with retriggers: {bonuses_with_retriggers:,} ({(bonuses_with_retriggers / total_bonuses) * 100:.1f}%)")
+        print(f"   Average retriggers per bonus: {statistics.mean(data['retrigger_counts']):.2f}")
+
+        if data['retrigger_amounts']:
+            total_retrigger_spins = sum(data['retrigger_amounts'])
+            print(f"   Total free spins from retriggers: {total_retrigger_spins:,}")
+            print(f"   Average FS per retrigger: {statistics.mean(data['retrigger_amounts']):.1f}")
+
+            retrigger_breakdown = Counter(data['retrigger_counts'])
+            print(f"\n   Retrigger Distribution:")
+            for retriggers in sorted(retrigger_breakdown.keys())[:10]:
+                count = retrigger_breakdown[retriggers]
+                pct = (count / total_bonuses) * 100
+                print(f"     {retriggers} retriggers: {count:,} bonuses ({pct:.1f}%)")
 
 def main():
     """Main analysis function."""

@@ -72,25 +72,63 @@ class GameConfig(Config):
 
         self.freespin_triggers = {
             self.basegame_type: {
-                3: 8,
-                4: 12,
-                5: 15,
-                6: 17,
-                7: 19,
-                8: 21,
-                9: 23,
-                10: 24,
+                4: 10,  # 4+ scatters → 10 free spins
+                5: 10,  # 5 scatters → 10 free spins
+                6: 10,  # 6 scatters → 10 free spins
+                7: 10,  # 7 scatters → 10 free spins
+                8: 10,  # 8 scatters → 10 free spins
+                9: 10,  # 9 scatters → 10 free spins
+                10: 10, # 10 scatters → 10 free spins
+                11: 10, # 11 scatters → 10 free spins
+                12: 10, # 12 scatters → 10 free spins
+                13: 10, # 13 scatters → 10 free spins
+                14: 10, # 14 scatters → 10 free spins
+                15: 10, # 15 scatters → 10 free spins
+                16: 10, # 16 scatters → 10 free spins
+                17: 10, # 17 scatters → 10 free spins
+                18: 10, # 18 scatters → 10 free spins
+                19: 10, # 19 scatters → 10 free spins
+                20: 10, # 20 scatters → 10 free spins
+                21: 10, # 21 scatters → 10 free spins
+                22: 10, # 22 scatters → 10 free spins
+                23: 10, # 23 scatters → 10 free spins
+                24: 10, # 24 scatters → 10 free spins
+                25: 10, # 25 scatters → 10 free spins
+                26: 10, # 26 scatters → 10 free spins
+                27: 10, # 27 scatters → 10 free spins
+                28: 10, # 28 scatters → 10 free spins
+                29: 10, # 29 scatters → 10 free spins
+                30: 10, # 30 scatters → 10 free spins (entire board)
             },
             self.freegame_type: {
-                2: 3,
-                3: 5,
-                4: 8,
-                5: 12,
-                6: 14,
-                7: 16,
-                8: 18,
-                9: 10,
-                10: 12,
+                3: 5,   # 3+ scatters → +5 spins (retrigger)
+                4: 5,   # 4 scatters → +5 spins
+                5: 5,   # 5 scatters → +5 spins
+                6: 5,   # 6 scatters → +5 spins
+                7: 5,   # 7 scatters → +5 spins
+                8: 5,   # 8 scatters → +5 spins
+                9: 5,   # 9 scatters → +5 spins
+                10: 5,  # 10 scatters → +5 spins
+                11: 5,  # 11 scatters → +5 spins
+                12: 5,  # 12 scatters → +5 spins
+                13: 5,  # 13 scatters → +5 spins
+                14: 5,  # 14 scatters → +5 spins
+                15: 5,  # 15 scatters → +5 spins
+                16: 5,  # 16 scatters → +5 spins
+                17: 5,  # 17 scatters → +5 spins
+                18: 5,  # 18 scatters → +5 spins
+                19: 5,  # 19 scatters → +5 spins
+                20: 5,  # 20 scatters → +5 spins
+                21: 5,  # 21 scatters → +5 spins
+                22: 5,  # 22 scatters → +5 spins
+                23: 5,  # 23 scatters → +5 spins
+                24: 5,  # 24 scatters → +5 spins
+                25: 5,  # 25 scatters → +5 spins
+                26: 5,  # 26 scatters → +5 spins
+                27: 5,  # 27 scatters → +5 spins
+                28: 5,  # 28 scatters → +5 spins
+                29: 5,  # 29 scatters → +5 spins
+                30: 5,  # 30 scatters → +5 spins (entire board)
             },
         }
         self.anticipation_triggers = {
