@@ -23,9 +23,9 @@
 ---
 
 ## Symbols
-- **Regular symbols:** 9 total (h1–h4 high pays, l1–l5 low pays)
+- **Regular symbols:** 8 total (h1–h4 high pays, l1–l4 low pays)
 - **Special symbols:** scatter, multiplier (FS only)
-- **Total unique symbols:** 11
+- **Total unique symbols:** 10
 
 ## Paytable (multipliers of base bet)
 
@@ -44,7 +44,6 @@
 | **l2** | 8.00  | 1.00 | 0.80 |
 | **l3** | 5.00  | 1.00 | 0.50 |
 | **l4** | 4.00  | 0.90 | 0.40 |
-| **l5** | 2.00  | 0.75 | 0.25 |
 
 ### Scatter
 - **Label:** `scatter`  
@@ -65,12 +64,12 @@
 ## Symbol Weight Sets
 
 ### Base Game Weights
-- Regular symbols (h1-h4, l1-l5): Weighted for target hit rate
+- Regular symbols (h1-h4, l1-l4): Weighted for target hit rate
 - scatter: Low weight for ~1/200 FS trigger rate (ante off)
 - multiplier: Weight = 0 (never appears)
 
 ### Free Spins Weights
-- Regular symbols (h1-h4, l1-l5): Similar to base
+- Regular symbols (h1-h4, l1-l4): Similar to base
 - scatter: Weight for retrigger potential
 - multiplier: Active weight for multiplier symbols
 

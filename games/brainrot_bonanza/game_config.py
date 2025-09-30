@@ -59,9 +59,6 @@ class GameConfig(Config):
             (t1, "L4"): 0.40,
             (t2, "L4"): 0.90,
             (t3, "L4"): 4.00,
-            (t1, "L5"): 0.25,
-            (t2, "L5"): 0.75,
-            (t3, "L5"): 2.00,
             # Scatter pays
             # ((4, 4), "S"): 3.00,
             # ((5, 5), "S"): 5.00,
@@ -122,7 +119,7 @@ class GameConfig(Config):
                     Distribution(
                         criteria="wincap",
                         quota=0.001,
-                        # win_criteria=self.wincap,
+                        win_criteria=self.wincap,
                         conditions={
                             "reel_weights": {
                                 self.basegame_type: {"BR0": 1},
@@ -131,20 +128,12 @@ class GameConfig(Config):
                             "mult_values": {
                                 self.basegame_type: {},  # No multipliers in base game
                                 self.freegame_type: {
-                                    2: 100,    # ~22% chance
-                                    3: 80,     # ~18% chance
-                                    4: 70,     # ~15% chance
-                                    5: 50,     # ~11% chance
-                                    6: 40,     # ~9% chance
-                                    8: 30,     # ~7% chance
-                                    10: 25,    # ~5.5% chance
-                                    12: 20,    # ~4.4% chance
-                                    15: 15,    # ~3.3% chance
-                                    20: 10,    # ~2.2% chance
-                                    25: 8,     # ~1.8% chance
-                                    50: 5,     # ~1.1% chance
-                                    100: 2,    # ~0.4% chance
-                                    1000: 1    # ~0.2% chance
+                                    100: 1,    # All high multipliers for wincap forcing
+                                    200: 1,
+                                    300: 1,
+                                    400: 1,
+                                    500: 1,
+                                    1000: 1
                                 },
                             },
                             "scatter_triggers": {4: 1, 5: 2},
@@ -245,7 +234,7 @@ class GameConfig(Config):
             ),
             BetMode(
                 name="bonus",
-                cost=200,
+                cost=100.0,
                 rtp=self.rtp,
                 max_win=self.wincap,
                 auto_close_disabled=False,
@@ -255,7 +244,7 @@ class GameConfig(Config):
                     Distribution(
                         criteria="wincap",
                         quota=0.001,
-                        # win_criteria=self.wincap,
+                        win_criteria=self.wincap,
                         conditions={
                             "reel_weights": {
                                 self.basegame_type: {"BR0": 1},
@@ -264,20 +253,12 @@ class GameConfig(Config):
                             "mult_values": {
                                 self.basegame_type: {},  # No multipliers in base game
                                 self.freegame_type: {
-                                    2: 100,    # ~22% chance
-                                    3: 80,     # ~18% chance
-                                    4: 70,     # ~15% chance
-                                    5: 50,     # ~11% chance
-                                    6: 40,     # ~9% chance
-                                    8: 30,     # ~7% chance
-                                    10: 25,    # ~5.5% chance
-                                    12: 20,    # ~4.4% chance
-                                    15: 15,    # ~3.3% chance
-                                    20: 10,    # ~2.2% chance
-                                    25: 8,     # ~1.8% chance
-                                    50: 5,     # ~1.1% chance
-                                    100: 2,    # ~0.4% chance
-                                    1000: 1    # ~0.2% chance
+                                    100: 1,    # All high multipliers for wincap forcing
+                                    200: 1,
+                                    300: 1,
+                                    400: 1,
+                                    500: 1,
+                                    1000: 1
                                 },
                             },
                             "scatter_triggers": {4: 10, 5: 5, 6: 1},

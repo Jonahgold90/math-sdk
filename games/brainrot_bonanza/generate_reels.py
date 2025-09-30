@@ -58,8 +58,8 @@ def main():
     # Base game symbol weights (BR0.csv)
     # Higher weights = more frequent
     base_weights = {
-    'H1': 48, 'H2': 58, 'H3': 68, 'H4': 78,
-    'L1': 90, 'L2': 100, 'L3': 108, 'L4': 126,   # L5 removed
+    'H1': 44, 'H2': 54, 'H3': 64, 'H4': 74,
+    'L1': 94, 'L2': 108, 'L3': 118, 'L4': 142,   # L5 removed
     'S': 21,  # ≈44/1500 scatters → ~1.0–1.1% FS triggers (tweak 20–22 to taste)
     }
 
@@ -71,7 +71,7 @@ def main():
     'H1': 42, 'H2': 51, 'H3': 61, 'H4': 71,
     'L1': 90, 'L2': 102, 'L3': 116, 'L4': 150,  # L4 becomes the “cheapest” & most frequent
     'S': 15,                                    # ≈30–33/1500 for retriggers
-    'M': 17.2,                                  # ≈36 bombs of 1500 → ~0.72 bombs/drop
+    'M': 15.2,                                  # ≈36 bombs of 1500 → ~0.72 bombs/drop
     }
 
 
