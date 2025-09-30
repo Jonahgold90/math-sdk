@@ -24,12 +24,13 @@ class GameExecutables(GameCalculations):
         """After all tumbling events have finished, multiply tumble-win by sum of mult symbols."""
         if self.gametype == self.config.freegame_type:  # Only multipliers in freegame
             board_mult, mult_info = self.get_board_multipliers()
+            factor = board_mult if board_mult > 0.0 else 1.0
             base_tumble_win = copy(self.win_manager.spin_win)
-            self.win_manager.set_spin_win(base_tumble_win * board_mult)
+            self.win_manager.set_spin_win(base_tumble_win * factor)
             if self.win_manager.spin_win > 0 and len(mult_info) > 0:
                 send_mult_info_event(
                     self,
-                    board_mult,
+                    factor,
                     mult_info,
                     base_tumble_win,
                     self.win_manager.spin_win,
@@ -70,7 +71,6 @@ class GameExecutables(GameCalculations):
         """Called before a new reveal during freegame."""
         self.fs += 1
         update_freespin_event(self)
-        # This game does not reset the global multiplier on each spin
         self.global_multiplier = 1
         update_global_mult_event(self)
         self.win_manager.reset_spin_win()

@@ -66,7 +66,9 @@ class Scatter:
                     if board[p["reel"]][p["row"]].check_attribute(multiplier_key):
                         symbol_mult += board[p["reel"]][p["row"]].get_attribute(multiplier_key)
 
-                    board[p["reel"]][p["row"]].assign_attribute({"explode": True})
+                    # Don't explode multiplier symbols - they should persist through tumble chain
+                    if not board[p["reel"]][p["row"]].check_attribute(multiplier_key):
+                        board[p["reel"]][p["row"]].assign_attribute({"explode": True})
 
                 symbol_mult = max(symbol_mult, 1)
                 overlay_position = Scatter.get_central_scatter_position(
