@@ -20,6 +20,7 @@ if __name__ == "__main__":
     num_sim_args = {
         "base": int(5000),
         "bonus": int(5000),
+        "ante": int(5000),
     }
 
     run_conditions = {
@@ -28,7 +29,7 @@ if __name__ == "__main__":
         "run_analysis": True,
         "run_format_checks": False,
     }
-    target_modes = ["base", "bonus"]
+    target_modes = ["base", "bonus", "ante"]
 
     config = GameConfig()
     gamestate = GameState(config)

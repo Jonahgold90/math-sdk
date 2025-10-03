@@ -146,6 +146,131 @@ class GameConfig(Config):
         self.padding_reels[self.freegame_type] = self.reels["FR0"]
         self.bet_modes = [
             BetMode(
+                name="ante",
+                cost=1.25,
+                rtp=self.rtp,
+                max_win=self.wincap,
+                auto_close_disabled=False,
+                is_feature=True,
+                is_buybonus=False,
+                distributions=[
+                    Distribution(
+                        criteria="wincap",
+                        quota=0.001,
+                        win_criteria=self.wincap,
+                        conditions={
+                            "reel_weights": {
+                                self.basegame_type: {"BR0": 1},
+                                self.freegame_type: {"FR0": 1},
+                            },
+                            "mult_values": {
+                                self.basegame_type: {},  # No multipliers in base game
+                                self.freegame_type: {
+                                    100: 1,    # All high multipliers for wincap forcing
+                                    200: 1,
+                                    300: 1,
+                                    400: 1,
+                                    500: 1,
+                                    1000: 1
+                                },
+                            },
+                            "scatter_triggers": {4: 1, 5: 2},
+                            "force_wincap": True,
+                            "force_freegame": True,
+                        },
+                    ),
+                    Distribution(
+                        criteria="freegame",
+                        quota=0.1,
+                        conditions={
+                            "reel_weights": {
+                                self.basegame_type: {"BR0": 1},
+                                self.freegame_type: {"FR0": 1},
+                            },
+                            "scatter_triggers": {4: 5, 5: 1},
+                            "mult_values": {
+                                self.basegame_type: {},  # No multipliers in base game
+                                self.freegame_type: {
+                                    2: 100,    # ~22% chance
+                                    3: 80,     # ~18% chance
+                                    4: 70,     # ~15% chance
+                                    5: 50,     # ~11% chance
+                                    6: 40,     # ~9% chance
+                                    8: 30,     # ~7% chance
+                                    10: 25,    # ~5.5% chance
+                                    12: 20,    # ~4.4% chance
+                                    15: 15,    # ~3.3% chance
+                                    20: 10,    # ~2.2% chance
+                                    25: 8,     # ~1.8% chance
+                                    50: 5,     # ~1.1% chance
+                                    100: 2,    # ~0.4% chance
+                                    1000: 1    # ~0.2% chance
+                                },
+                            },
+                            "force_wincap": False,
+                            "force_freegame": True,
+                        },
+                    ),
+                    Distribution(
+                        criteria="0",
+                        quota=0.4,
+                        win_criteria=0.0,
+                        conditions={
+                            "reel_weights": {self.basegame_type: {"BR0": 1}},
+                            "mult_values": {
+                                self.basegame_type: {},  # No multipliers in base game
+                                self.freegame_type: {
+                                    2: 100,    # ~22% chance
+                                    3: 80,     # ~18% chance
+                                    4: 70,     # ~15% chance
+                                    5: 50,     # ~11% chance
+                                    6: 40,     # ~9% chance
+                                    8: 30,     # ~7% chance
+                                    10: 25,    # ~5.5% chance
+                                    12: 20,    # ~4.4% chance
+                                    15: 15,    # ~3.3% chance
+                                    20: 10,    # ~2.2% chance
+                                    25: 8,     # ~1.8% chance
+                                    50: 5,     # ~1.1% chance
+                                    100: 2,    # ~0.4% chance
+                                    1000: 1    # ~0.2% chance
+                                },
+                            },
+                            "force_wincap": False,
+                            "force_freegame": False,
+                        },
+                    ),
+                    Distribution(
+                        criteria="basegame",
+                        quota=0.5,
+                        conditions={
+                            "reel_weights": {self.basegame_type: {"BR0": 1}},
+                            "mult_values": {
+                                self.basegame_type: {},  # No multipliers in base game
+                                self.freegame_type: {
+                                    2: 1000,   # Very common
+                                    3: 500,    # Common
+                                    4: 300,    # Common
+                                    5: 200,    # Uncommon
+                                    6: 150,    # Uncommon
+                                    8: 100,    # Rare
+                                    10: 80,    # Rare
+                                    12: 60,    # Rare
+                                    15: 40,    # Very rare
+                                    20: 20,    # Very rare
+                                    25: 10,    # Very rare
+                                    50: 5,     # Extremely rare
+                                    100: 2,    # Extremely rare
+                                    1000: 1    # Extremely rare
+                                }
+                            },
+                            "force_wincap": False,
+                            "force_freegame": False,
+                        },
+                    ),
+                ],
+            ),
+            BetMode(
                 name="base",
                 cost=1.0,
                 rtp=self.rtp,
