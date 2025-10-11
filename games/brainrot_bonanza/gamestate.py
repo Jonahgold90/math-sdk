@@ -14,7 +14,6 @@ class GameState(GameStateOverride):
             self.draw_board()
 
             self.get_scatterpays_update_wins()
-            self.emit_tumble_win_events()  # Transmit win information
 
             while self.win_data["totalWin"] > 0 and not (self.wincap_triggered):
                 self.tumble_game_board()
@@ -41,7 +40,6 @@ class GameState(GameStateOverride):
             send_multiplier_landed_event(self)  # Check for multipliers on initial board
 
             self.get_scatterpays_update_wins()
-            self.emit_tumble_win_events()  # Transmit win information
 
             while self.win_data["totalWin"] > 0 and not (self.wincap_triggered):
                 self.tumble_game_board()
