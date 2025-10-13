@@ -252,6 +252,25 @@ Updates the global multiplier (always 1 at the start of each freespin in this ga
 }
 ```
 
+### `skibidiLaser` ⚡ **LASER ANIMATION EVENT**
+Triggers the Skibidi toilet laser animation when M symbols land on the board.
+```json
+{
+  "type": "skibidiLaser"
+}
+```
+
+**Timing:**
+- Emitted after `reveal` event when M symbols are visible on the board
+- Emitted once per spin (not per tumble)
+- Emitted in both base game and free spins
+- **NOT emitted** after tumble/cascade events
+
+**Usage:**
+- Triggers Skibidi toilet character laser eyes animation
+- Reveals multiplier text values on all M symbols currently on board
+- Plays before any win processing begins
+
 ### `multiplierLanded` ⭐ **NEW MULTIPLIER LANDING EVENT**
 Emitted when multiplier (M) symbols land on the board during free spins.
 ```json

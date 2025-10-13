@@ -1,5 +1,6 @@
 BOARD_MULT_INFO = "boardMultiplierInfo"
 MULTIPLIER_LANDED = "multiplierLanded"
+SKIBIDI_LASER = "skibidiLaser"
 
 
 def send_multiplier_landed_event(gamestate):
@@ -33,6 +34,32 @@ def send_multiplier_landed_event(gamestate):
             "multipliers": multipliers,
             "totalMultipliers": len(multipliers),
             "boardMultiplierSum": float(total_mult_sum)
+        }
+        gamestate.book.add_event(event)
+
+
+def send_skibidi_laser_event(gamestate):
+    """Emit skibidiLaser event when M symbols land on the board.
+
+    This triggers the Skibidi toilet laser animation on the frontend.
+    Only emits once per spin, not per tumble.
+    """
+    has_m_symbols = False
+
+    # Check all positions on the board for M symbols
+    for reel in gamestate.board:
+        for symbol in reel:
+            if hasattr(symbol, 'name') and symbol.name == 'M':
+                has_m_symbols = True
+                break
+        if has_m_symbols:
+            break
+
+    # Only emit event if M symbols were found
+    if has_m_symbols:
+        event = {
+            "index": len(gamestate.book.events),
+            "type": SKIBIDI_LASER
         }
         gamestate.book.add_event(event)
 

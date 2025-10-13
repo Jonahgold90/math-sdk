@@ -1,6 +1,6 @@
 from game_override import GameStateOverride
 from src.calculations.scatter import Scatter
-from game_events import send_multiplier_landed_event
+from game_events import send_multiplier_landed_event, send_skibidi_laser_event
 
 
 class GameState(GameStateOverride):
@@ -12,6 +12,7 @@ class GameState(GameStateOverride):
         while self.repeat:
             self.reset_book()
             self.draw_board()
+            send_skibidi_laser_event(self)  # Trigger laser animation for M symbols
 
             self.get_scatterpays_update_wins()
 
@@ -37,6 +38,7 @@ class GameState(GameStateOverride):
             # Resets global multiplier at each spin
             self.update_freespin()
             self.draw_board()
+            send_skibidi_laser_event(self)  # Trigger laser animation for M symbols
             send_multiplier_landed_event(self)  # Check for multipliers on initial board
 
             self.get_scatterpays_update_wins()
