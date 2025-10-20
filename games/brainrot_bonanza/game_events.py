@@ -4,7 +4,10 @@ SKIBIDI_LASER = "skibidiLaser"
 
 
 def send_multiplier_landed_event(gamestate):
-    """Emit event when multiplier symbols land on the board during free spins."""
+    """Emit event when multiplier symbols land on the board during free spins.
+
+    Also handles emitting the skibidiLaser event before the first multiplier of each spin.
+    """
     if gamestate.gametype != gamestate.config.freegame_type:
         return  # Only emit in free spins
 
@@ -28,6 +31,16 @@ def send_multiplier_landed_event(gamestate):
 
     # Only emit event if multipliers were found
     if multipliers:
+        # Check if this is the first multiplier of the spin
+        if not getattr(gamestate, '_laser_fired_this_spin', False):
+            # Emit laser event before the first multiplier event
+            laser_event = {
+                "index": len(gamestate.book.events),
+                "type": SKIBIDI_LASER
+            }
+            gamestate.book.add_event(laser_event)
+            gamestate._laser_fired_this_spin = True
+
         event = {
             "index": len(gamestate.book.events),
             "type": MULTIPLIER_LANDED,
