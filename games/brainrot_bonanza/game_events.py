@@ -34,9 +34,12 @@ def send_multiplier_landed_event(gamestate):
         # Check if this is the first multiplier of the spin
         if not getattr(gamestate, '_laser_fired_this_spin', False):
             # Emit laser event before the first multiplier event
+            # Include positions for lightning strike animation
+            positions = [{"reel": mult["reel"], "row": mult["row"]} for mult in multipliers]
             laser_event = {
                 "index": len(gamestate.book.events),
-                "type": SKIBIDI_LASER
+                "type": SKIBIDI_LASER,
+                "positions": positions
             }
             gamestate.book.add_event(laser_event)
             gamestate._laser_fired_this_spin = True

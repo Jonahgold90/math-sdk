@@ -80,3 +80,32 @@
 
 ---
 
+## Events
+
+### skibidiLaser
+- **Trigger:** Emitted once per FS spin when multiplier symbols land on the board (before the first multiplierLanded event)
+- **Purpose:** Triggers Skibidi toilet laser animation on frontend
+- **Data:**
+  - `positions`: Array of multiplier positions for lightning strike animation
+    - Each position: `{ reel: number, row: number }`
+    - Example: `[{ reel: 0, row: 2 }, { reel: 2, row: 1 }, { reel: 4, row: 3 }]`
+
+### multiplierLanded
+- **Trigger:** Emitted when multiplier symbols land on the board during free spins
+- **Purpose:** Reports all multipliers on board with their positions and values
+- **Data:**
+  - `multipliers`: Array of multiplier objects with reel, row, and value
+  - `totalMultipliers`: Count of multipliers on board
+  - `boardMultiplierSum`: Sum of all multiplier values
+
+### boardMultiplierInfo
+- **Trigger:** Emitted at end of tumble chain when multipliers are applied to wins
+- **Purpose:** Reports how board multipliers affect the tumble chain win
+- **Data:**
+  - `multInfo.positions`: Array of multiplier positions with their values
+  - `winInfo.tumbleWin`: Base win before multipliers applied
+  - `winInfo.boardMult`: Total board multiplier
+  - `winInfo.totalWin`: Final win after multipliers applied
+
+---
+
